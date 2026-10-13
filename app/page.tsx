@@ -16,23 +16,24 @@ export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   useEffect(() => {
-    async function fetchProperties() {
+    async function fetchDashboardStatements() {
       try {
         setIsLoading(true);
-        const res = await fetch('/api/properties');
+        // Fetch properties combined with their statement snapshot status for the selected year/month
+        const res = await fetch(`/api/statements?year=${selectedYear}&month=${selectedMonth}`);
         const data = await res.json();
         if (data.success) {
-          setProperties(data.properties); // Updates state with records from src/data/db.json
+          setProperties(data.statements || data.properties); 
         }
       } catch (error) {
-        console.error('Failed to load dashboard properties:', error);
+        console.error('Failed to load dashboard statements:', error);
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchProperties();
-  }, []);
+    fetchDashboardStatements();
+  }, [selectedYear, selectedMonth]);
 
   const filteredProperties = useMemo(() => {
     return properties.filter((item) => {
@@ -49,12 +50,12 @@ export default function DashboardPage() {
     const list = properties;
 
     return {
-      notGenerated: list.filter((p) => p.status === 'not_generated' || p.status === 'created').length,
+      notGenerated: list.filter((p) => p.status === 'not_generated' || !p.status).length,
       draft: list.filter((p) => p.status === 'draft').length,
       published: list.filter((p) => p.status === 'published').length,
       totalProperties: list.length,
-      totalOwnerPayout: list.reduce((acc, curr) => acc + (curr.ownerPayout || 0), 0),
-      totalCommission: list.reduce((acc, curr) => acc + (curr.commission || 0), 0),
+      totalOwnerPayout: list.reduce((acc, curr) => acc + (curr.totalPayout || curr.ownerPayout || 0), 0),
+      totalCommission: list.reduce((acc, curr) => acc + (curr.mgmtFee || curr.commission || 0), 0),
     };
   }, [properties]);
 

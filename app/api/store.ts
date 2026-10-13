@@ -4,8 +4,13 @@ import path from 'path';
 const filePath = path.join(process.cwd(), 'src/data/db.json');
 
 export function readDb() {
-  if (!fs.existsSync(filePath)) return { properties: [], users: [] };
-  return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  if (!fs.existsSync(filePath)) return { properties: [], users: [], statements: {} };
+  const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  return {
+    properties: data.properties || [],
+    users: data.users || [],
+    statements: data.statements || {},
+  };
 }
 
 export function writeDb(data: any) {
@@ -13,8 +18,11 @@ export function writeDb(data: any) {
 }
 
 // --- DRY Collection Helpers ---
-export function getCollection(collectionName: 'properties' | 'users') {
+export function getCollection(collectionName: 'properties' | 'users' | 'statements') {
   const db = readDb();
+  if (collectionName === 'statements') {
+    return db.statements;
+  }
   return db[collectionName] || [];
 }
 
@@ -46,4 +54,11 @@ export function deleteFromCollection(collectionName: 'properties' | 'users', id:
   items.splice(index, 1);
   writeDb(db);
   return true;
+}
+
+// Specific helper to save/update the entire statements dictionary
+export function saveStatementsCollection(statements: Record<string, any>) {
+  const db = readDb();
+  db.statements = statements;
+  writeDb(db);
 }

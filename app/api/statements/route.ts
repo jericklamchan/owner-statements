@@ -1,0 +1,72 @@
+import { NextResponse } from 'next/server';
+import { getCollection, readDb } from '../store';
+import { 
+  getHostawayReservationsByHostawayId, 
+  getQuickBooksExpensesByClass, 
+  getStripeAdjustmentsByHostawayId 
+} from '@/utils/mockService';
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const year = searchParams.get('year') || '2026';
+    const month = searchParams.get('month') || '10';
+
+    const properties = getCollection('properties');
+    const db = readDb();
+    const statementsCache = db.statements || {};
+
+    const statementsWithStatus = properties.map((property: any) => {
+      const snapshotKey = `${property.id}_${year}_${month}`;
+      const savedSnapshot = statementsCache[snapshotKey];
+
+      if (savedSnapshot) {
+        return {
+          ...property,
+          status: savedSnapshot.status,
+          ownerPayout: savedSnapshot.totalPayout,
+          commission: savedSnapshot.mgmtFee,
+          year: savedSnapshot.year,
+          month: savedSnapshot.month,
+        };
+      }
+
+      // Fallback live calculation for properties without a saved snapshot yet
+      const reservations = getHostawayReservationsByHostawayId(property.hostaway_id);
+      const baseRentalIncome = reservations.reduce(
+        (acc: number, r: any) => acc + (r.totalPrice - (r.cleaningFee || 0)),
+        0
+      );
+      const cleaningFees = reservations.reduce(
+        (acc: number, r: any) => acc + (r.cleaningFee || 0),
+        0
+      );
+      const grossRevenue = baseRentalIncome + cleaningFees;
+      const mgmtFee = Math.round(baseRentalIncome * 0.18);
+      
+      const hasVrboBooking = reservations.some((r: any) => r.channel && r.channel.toLowerCase() === 'vrbo');
+      const qboExpenses = getQuickBooksExpensesByClass(property.qbo_class_name);
+      const stripeCharges = hasVrboBooking ? getStripeAdjustmentsByHostawayId(property.hostaway_id) : [];
+      const totalExpenses = [...qboExpenses, ...stripeCharges].reduce((acc: number, e: any) => acc + (e.amount || 0), 0);
+
+      const totalPayout = grossRevenue - mgmtFee - totalExpenses;
+
+      return {
+        ...property,
+        status: 'not_generated',
+        ownerPayout: totalPayout,
+        commission: mgmtFee,
+        year: parseInt(year, 10),
+        month: parseInt(month, 10),
+      };
+    });
+
+    return NextResponse.json({ success: true, statements: statementsWithStatus });
+  } catch (error) {
+    console.error('Statements List API Error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch statements list' },
+      { status: 500 }
+    );
+  }
+}

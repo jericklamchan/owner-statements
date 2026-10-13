@@ -22,22 +22,21 @@ export type ExpenseItem = {
   source?: 'QuickBooks' | 'Stripe' | 'Internal System';
 };
 
+export type StatementAdjustment = {
+  id: string;
+  date: string;
+  description: string;
+  amount: number; // positive for addition, negative for deduction
+};
+
 export type LineItem = {
   id: string;
   date: string;
   description: string;
   category: string;
-  source: 'Hostaway' | 'QuickBooks' | 'Stripe' | 'Internal System';
+  source: 'Hostaway' | 'QuickBooks' | 'Stripe' | 'Internal System' | 'Manual Adjustment';
   amount: number;
   type: 'income' | 'expense';
-};
-
-export type AuditEntry = {
-  id: string;
-  timestamp: string;
-  actor: string;
-  action: string;
-  details: string;
 };
 
 export type QuickbooksSyncInfo = {
@@ -61,11 +60,12 @@ export type PropertyStatement = {
   monthYear: string;
   year: number;
   month: number;
-  status: 'Not Generated' | 'Draft' | 'Published' | string;
+  status: 'not_generated' | 'draft' | 'published';
   totalPayout: number;
   grossRevenue: number;
   mgmtFee: number;
   totalExpenses: number;
+  totalAdjustments?: number;
   baseRentalIncome: number;
   cleaningFees: number;
   occupancyRate: number;
@@ -74,10 +74,10 @@ export type PropertyStatement = {
   avgDailyRate: number;
   reservations: ReservationItem[];
   expenses: ExpenseItem[];
+  adjustments?: StatementAdjustment[];
   qboExpenses?: ExpenseItem[];
   stripeCharges?: ExpenseItem[];
   lineItems?: LineItem[];
-  auditLogs?: AuditEntry[];
   quickbooksSync?: QuickbooksSyncInfo;
   stripePayout?: StripePayoutInfo;
   apiError?: string;
