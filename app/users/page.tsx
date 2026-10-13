@@ -1,66 +1,158 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ListPageLayout from '@/components/ui/ListPageLayout';
 
-const INITIAL_USERS = [
-  { id: 'u-1', name: 'Admin User', email: 'admin@ownerstatements.com', role: 'Admin', initials: 'AU', color: 'bg-blue-100 text-blue-700' },
-];
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+}
 
 export default function UsersPage() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  const filteredUsers = INITIAL_USERS.filter(
+  // Fetch users from local API on mount
+  const fetchUsers = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch('/api/users');
+      const data = await res.json();
+      if (data.success) {
+        setUsers(data.users);
+      }
+    } catch (error) {
+      console.error('Failed to load users:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Handle user deletion
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to remove this user?')) return;
+
+    try {
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUsers(prev => prev.filter(u => u.id !== id));
+      } else {
+        alert(data.error || 'Failed to delete user');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    }
+  };
+
+  // Handle inviting a new user (quick prompt for testing)
+  const handleInviteUser = async () => {
+    const name = prompt('Enter user name:');
+    if (!name) return;
+    const email = prompt('Enter email address:') || 'user@example.com';
+    const role = prompt('Enter role (Admin, Property Manager, Owner):') || 'Property Manager';
+
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, role }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUsers(prev => [...prev, data.user]);
+      }
+    } catch (error) {
+      console.error('Error adding user:', error);
+    }
+  };
+
+  const filteredUsers = users.filter(
     u => u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <ListPageLayout
       title="Users"
-      subtitle={`${INITIAL_USERS.length} user`}
+      subtitle={`${users.length} total user`}
       searchPlaceholder="Search users or emails…"
       searchValue={search}
       onSearchChange={(e) => setSearch(e.target.value)}
       actionLabel="+ Invite user"
-      onActionClick={() => alert('Invite user modal/action')}
+      onActionClick={handleInviteUser}
       cardTitle="Platform Users"
     >
-      <table className="w-full text-xs table-fixed">
-        <thead>
-          <tr className="bg-gray-50/75 border-b border-gray-200 uppercase text-gray-400 font-semibold tracking-wider">
-            <th className="w-2/5 px-5 py-3 text-left">User</th>
-            <th className="w-1/4 px-5 py-3 text-left">Email</th>
-            <th className="w-1/4 px-5 py-3 text-left">Role</th>
-            <th className="w-[10%] px-5 py-3 text-right"></th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {filteredUsers.map((user) => (
-            <tr key={user.id} className="hover:bg-gray-50/80 transition-colors">
-              <td className="px-5 py-3 truncate">
-                <div className="flex items-center gap-3">
-                  <div className={`h-7 w-7 rounded-lg flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${user.color}`}>
-                    {user.initials}
-                  </div>
-                  <span className="font-medium text-gray-900 truncate">{user.name}</span>
-                </div>
-              </td>
-              <td className="px-5 py-3 text-gray-600 truncate">{user.email}</td>
-              <td className="px-5 py-3 text-gray-500 truncate">
-                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-50 text-blue-700 uppercase">
-                  {user.role}
-                </span>
-              </td>
-              <td className="px-5 py-3 text-right">
-                <div className="flex gap-1.5 justify-end">
-                  <button className="text-[11px] px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer font-medium">Edit</button>
-                  <button className="text-[11px] px-2.5 py-1 rounded-md border border-red-200 text-red-600 hover:bg-red-50 transition-colors cursor-pointer font-medium">Remove</button>
-                </div>
-              </td>
+      {isLoading ? (
+        <div className="py-12 text-center text-xs text-gray-400 animate-pulse">Loading users from JSON cache...</div>
+      ) : filteredUsers.length === 0 ? (
+        <div className="py-12 text-center text-xs text-gray-500">No users found.</div>
+      ) : (
+        <table className="w-full text-xs table-fixed">
+          <thead>
+            <tr className="bg-gray-50/75 border-b border-gray-200 uppercase text-gray-400 font-semibold tracking-wider">
+              <th className="w-2/5 px-5 py-3 text-left">User</th>
+              <th className="w-1/3 px-5 py-3 text-left">Email</th>
+              <th className="w-1/4 px-5 py-3 text-left">Role</th>
+              <th className="w-[12%] px-5 py-3 text-right"></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {filteredUsers.map((user) => {
+              const initials = user.name
+                .split(' ')
+                .map(w => w[0])
+                .join('')
+                .substring(0, 2)
+                .toUpperCase();
+
+              return (
+                <tr key={user.id} className="hover:bg-gray-50/80 transition-colors">
+                  <td className="px-5 py-3 truncate">
+                    <div className="flex items-center gap-3">
+                      <div className="h-7 w-7 rounded-lg flex items-center justify-center text-[11px] font-bold flex-shrink-0 bg-blue-100 text-blue-700">
+                        {initials || 'U'}
+                      </div>
+                      <span className="font-medium text-gray-900 truncate">{user.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 text-gray-600 truncate">{user.email}</td>
+                  <td className="px-5 py-3 truncate">
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-50 text-blue-700 uppercase">
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <div className="flex gap-1.5 justify-end">
+                      <button 
+                        onClick={() => alert(`Edit feature for ${user.name}`)}
+                        className="text-[11px] px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer font-medium"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(user.id)}
+                        className="text-[11px] px-2.5 py-1 rounded-md border border-red-200 text-red-600 hover:bg-red-50 transition-colors cursor-pointer font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
     </ListPageLayout>
   );
 }

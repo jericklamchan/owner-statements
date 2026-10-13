@@ -19,10 +19,10 @@ export default function DashboardPage() {
     async function fetchProperties() {
       try {
         setIsLoading(true);
-        const res = await fetch('/api/statements');
+        const res = await fetch('/api/properties');
         const data = await res.json();
         if (data.success) {
-          setProperties(data.properties);
+          setProperties(data.properties); // Updates state with records from src/data/db.json
         }
       } catch (error) {
         console.error('Failed to load dashboard properties:', error);
