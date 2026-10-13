@@ -1,7 +1,7 @@
 'use client';
 
 import { LineItem } from '@/types/statement';
-import StatementSection from '@/components/ui/StatementSection';
+import StatementSection from '@/components/statements/StatementSection';
 
 type LineItemsTabProps = {
   lineItems?: LineItem[];

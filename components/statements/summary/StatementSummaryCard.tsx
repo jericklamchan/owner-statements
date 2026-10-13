@@ -1,7 +1,7 @@
 'use client';
 
 import { PropertyStatement } from '@/types/statement';
-import StatementSection from '@/components/ui/StatementSection';
+import StatementSection from '@/components/statements/StatementSection';
 
 export default function StatementSummaryCard({ statement }: { statement: PropertyStatement }) {
   const stripeFeesTotal = statement.stripeCharges?.reduce((acc, charge) => acc + charge.amount, 0) || 0;

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { StatementAdjustment } from '@/types/statement';
-import StatementSection from '@/components/ui/StatementSection';
+import StatementSection from '@/components/statements/StatementSection';
 
 type AdjustmentsSectionProps = {
   adjustments?: StatementAdjustment[];

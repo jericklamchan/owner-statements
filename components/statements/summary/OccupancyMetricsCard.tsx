@@ -1,7 +1,7 @@
 'use client';
 
 import { PropertyStatement } from '@/types/statement';
-import StatementSection from '@/components/ui/StatementSection';
+import StatementSection from '@/components/statements/StatementSection';
 
 export default function OccupancyMetricsCard({ statement }: { statement: PropertyStatement }) {
   return (

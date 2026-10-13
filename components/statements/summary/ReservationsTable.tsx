@@ -1,7 +1,7 @@
 'use client';
 
 import { PropertyStatement } from '@/types/statement';
-import StatementSection from '@/components/ui/StatementSection';
+import StatementSection from '@/components/statements/StatementSection';
 
 export default function ReservationsTable({ reservations }: { reservations: PropertyStatement['reservations'] }) {
   const hasReservations = reservations.length > 0;

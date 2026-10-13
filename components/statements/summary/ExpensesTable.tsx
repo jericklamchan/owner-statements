@@ -1,7 +1,7 @@
 'use client';
 
 import { PropertyStatement } from '@/types/statement';
-import StatementSection from '@/components/ui/StatementSection';
+import StatementSection from '@/components/statements/StatementSection';
 
 export default function ExpensesTable({ expenses }: { expenses: PropertyStatement['expenses'] }) {
   const hasExpenses = expenses && expenses.length > 0;
