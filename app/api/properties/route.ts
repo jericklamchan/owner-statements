@@ -1,16 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCollection, addToCollection } from '../store';
-
-function getPropertyInitials(name: string): string {
-  if (!name) return 'PR';
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((w: string) => w[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase();
-}
+import { getPropertyInitials } from '@/utils/formatters';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
