@@ -1,96 +1,97 @@
-# Owner Statements Dashboard
+# Property Owner Statement Generator
 
-A modern, high-density property owner statement management application built with Next.js App Router, TypeScript, and Tailwind CSS. Designed to streamline property management operations, financial calculations, and statement publishing workflows.
-
----
-
-## Features
-
-- **Dashboard Metrics & Summary:** Real-time visibility into statement statuses (`Not Generated`, `Draft`, `Published`), total property counts, aggregate owner payouts, and commission totals.
-- **Statement Detail Views:** Multi-tab statement breakdowns covering financial summaries (`SummaryTab`), detailed line item records (`LineItemsTab`), and verification logs (`AuditTab`).
-- **Properties & Users Management:** Dedicated, active management views for portfolios and user access control (`/properties`, `/users`).
-- **Advanced Filtering & Search:** Filter statement queues dynamically by year, month, and generation status, paired with real-time property and owner search.
-- **Modern SaaS UI/UX:** Built with a clean, high-density layout inspired by industry-standard tools like Stripe and Vercel, utilizing shared layout primitives (`ListPageLayout`, `Card`).
-- **Robust App Router Compliance:** Built-in Suspense boundaries and safe fallbacks for dynamic routes (`[id]`) and runtime URL hooks (`usePathname`) to ensure smooth prerendering and error-free navigation.
+A modern full-stack web application designed for short-term rental management operations. The platform aggregates financial data across **Hostaway**, **QuickBooks**, and **Stripe** to calculate revenue splits, management fees, expenses, and net owner payouts, automatically producing polished, audit-ready monthly owner statements.
 
 ---
 
-## Tech Stack
+## 🚀 Tech Stack
 
-- **Framework:** Next.js (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS
-- **UI Architecture:** Modular components with reusable layout primitives & responsive tables
+- **Framework:** [Next.js](https://nextjs.org/) (App Router, React 19, TypeScript)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **State & Data Fetching:** React Hooks (`use`, `useState`, `useEffect`, `useMemo`)
+- **Type System:** Strict TypeScript with centralized domain models
+- **Deployment & Prerendering:** Next.js Static Export / Dynamic App Router Architecture
 
 ---
 
-## Project Structure
+## 📁 Repository & Architecture Overview
 
 ```text
-owner-statements/
 ├── app/
-│   ├── layout.tsx             # Root layout and metadata
-│   ├── page.tsx               # Main dashboard view
-│   ├── globals.css            # Global Tailwind stylesheet
-│   ├── properties/
-│   │   └── page.tsx           # Properties management view
+│   ├── api/
+│   │   ├── properties/       # Mock aggregator endpoints
+│   │   └── statements/[id]/   # Statement detail API endpoints
 │   ├── statements/
 │   │   └── [id]/
-│   │       └── page.tsx       # Dynamic statement detail page
-│   └── users/
-│       └── page.tsx           # Users management view
+│   │       └── page.tsx      # Dynamic statement detail route (Wrapped in <Suspense>)
+│   ├── layout.tsx            # Global layout & navigation wrapper
+│   └── page.tsx              # Main Statement Dashboard view
 ├── components/
-│   ├── DashboardFilters.tsx   # Inline year, month, and status filters
-│   ├── MetricCards.tsx        # Condensed KPI summary cards
-│   ├── NavBar.tsx             # Top navigation bar (Suspense-wrapped)
-│   ├── PropertyQueue.tsx      # Interactive data table with action triggers
-│   ├── statements/
-│   │   ├── AuditTab.tsx       # Statement audit trail view
-│   │   ├── LineItemstabs.tsx  # Detailed line items view
-│   │   └── SummaryTab.tsx     # High-level financial breakdown view
-│   └── ui/
-│       ├── Card.tsx           # Unified card primitive container
-│       └── ListPageLayout.tsx # Reusable wrapper layout for list views
-├── data/
-│   ├── dummyData.ts           # Mock property and filter datasets
-│   └── statementData.ts       # Detailed statement metrics and records
+│   ├── ui/                   # Reusable base UI primitives (Card, Badges)
+│   ├── statements/           # Tab views (SummaryTab, LineItemsTab, AuditTab)
+│   ├── DashboardFilters.tsx  # Year, Month, & Status filter bar
+│   ├── MetricsCards.tsx      # Compact high-level KPI dashboard metrics
+│   ├── NavBar.tsx            # Top application header & navigation
+│   └── PropertyQueue.tsx     # Filterable property table & status tracker
 ├── types/
-│   ├── dashboard.ts           # Dashboard TypeScript interfaces
-│   └── statement.ts           # Statement and line item TypeScript types
-└── utils/
-    └── constants.ts           # Shared application constants (Months, Years)
+│   ├── dashboard.ts          # Local UI prop definitions
+│   └── statement.ts          # Centralized domain models (PropertyStatement, LineItem, etc.)
+└── src/
+    └── data/
+        └── db.json           # Mock data storage
 ```
 
 ---
 
-## Getting Started
+## 🛠️ TypeScript & Code Conventions
 
-### Prerequisites
-
-Ensure you have Node.js installed on your machine.
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/owner-statements.git
-   cd owner-statements
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
-
-4. Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+1. **Centralized Domain Models:** Core data structures and API contracts (`UserRecord`, `PropertyRecord`, `PropertyStatement`) live centrally in `types/` for reuse across page routes and API handlers.
+2. **Local Component Props:** Props specific to a single component (e.g., `QueueProps`, `MetricsProps`) remain locally scoped inside their respective `.tsx` files.
+3. **Status Configuration Map:** Status rendering follows a strict workflow lifecycle (`not_generated` $\rightarrow$ `draft` $\rightarrow$ `published`). Status badges utilize a centralized configuration object (`STATUS_CONFIG`) in `PropertyQueue.tsx` rather than verbose switch statements.
 
 ---
 
-## License
+## ⚡ Dynamic Routes & Next.js Build Requirements
 
-This project is private and proprietary.
+Dynamic App Router routes that unwrap asynchronous parameters (e.g., `params: Promise<{ id: string }>`) using React's `use()` hook **must** wrap the component in a `<Suspense>` boundary. 
+
+```tsx
+// app/statements/[id]/page.tsx
+export default function StatementDetailPage({ params }: PageProps) {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <StatementDetailContent params={params} />
+    </Suspense>
+  );
+}
+```
+
+*This guarantees that Next.js static analysis during `npm run build` gracefully handles dynamic route parameters during static prerendering.*
+
+---
+
+## 🏃 Getting Started
+
+### 1. Install Dependencies
+```bash
+npm install
+```
+
+### 2. Run Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### 3. Build & Type Check
+```bash
+npm run build
+```
+
+---
+
+## 📝 Statement Workflow Lifecycle
+
+1. **Not Generated:** Default state for properties awaiting statement generation for the selected period.
+2. **Draft:** Initial statement generation complete; undergoing internal calculation & audit review.
+3. **Published:** Statement finalized and made visible to property owners.

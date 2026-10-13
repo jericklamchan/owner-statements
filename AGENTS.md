@@ -1,58 +1,59 @@
-# AGENTS.md - Developer & AI Assistant Guidelines
+# Developer & AI Agent Guidelines
 
-This document outlines the architectural rules, coding standards, and framework patterns for the **Owner Statements Dashboard** project. All contributors and AI assistants must adhere to these guidelines.
-
----
-
-## 1. Architecture & Component Standards
-
-- **UI Primitives & Layouts:** 
-  - Utilize shared primitives like the unified `Card` component (`components/ui/Card.tsx`) and `ListPageLayout` (`components/ui/ListPageLayout.tsx`) across all views to ensure a consistent Stripe/Vercel-inspired SaaS look and feel.
-  - Maintain clean separation between high-level page containers (`app/`) and modular subcomponents (`components/`).
-- **Statement Subviews:** 
-  - Statement detail tabs must be isolated into modular components (`SummaryTab`, `LineItemsTab`, `AuditTab`) located under `components/statements/`.
-- **Data Integrity & Fallbacks:**
-  - Always implement robust safety checks (`?? 0`, `?? []`, optional chaining `?.`) on all dynamic props, financial calculations (`toFixed`), and array lookups to prevent runtime crashes during initial loads.
+This document establishes the architectural standards, code style, and build requirements for contributing to the Property Owner Statement Generator codebase.
 
 ---
 
-## 2. Next.js App Router & Build Compliance
+## 🏗️ Architecture & Type System
 
-- **Dynamic Route Parameters:**
-  - Dynamic route pages (e.g., `app/statements/[id]/page.tsx`) must wrap request-bound parameters (`params`) and content using React `Suspense` boundaries to satisfy Next.js prerender requirements.
-  - Defer the `use(params)` call inside child components wrapped by `<Suspense>` rather than executing it synchronously at the parent page root.
-- **Client-Side Hooks (`usePathname`):**
-  - Any client component invoking runtime URL hooks like `usePathname()` (such as `NavBar.tsx`) must be structured with an internal content component wrapped in a `Suspense` boundary to prevent build prerender warnings.
+### 1. Centralized Data Entities
+- Core domain models (e.g., `UserRecord`, `PropertyRecord`, `PropertyStatement`, `LineItem`) **must** reside in the `types/` directory.
+- Avoid redefining global API payload shapes inside UI components or API handlers.
+
+### 2. Local Component Props
+- Interface definitions for props specific to a single component (e.g., `QueueProps`, `MetricsProps`) should remain local inside their respective `.tsx` component file.
 
 ---
 
-## 3. Directory Structure Reference
+## ⚡ Next.js App Router Rules
 
-```text
-owner-statements/
-├── app/
-│   ├── layout.tsx             # Root layout and metadata
-│   ├── page.tsx               # Main dashboard view
-│   ├── globals.css            # Global Tailwind stylesheet
-│   ├── properties/            # Properties management view
-│   ├── statements/[id]/       # Dynamic statement detail page
-│   └── users/                 # Users management view
-├── components/
-│   ├── DashboardFilters.tsx   # Filter controls
-│   ├── MetricCards.tsx        # KPI summary cards
-│   ├── NavBar.tsx             # Top navigation bar (Suspense-wrapped)
-│   ├── PropertyQueue.tsx      # Main statement table
-│   ├── statements/            # AuditTab, LineItemsTab, SummaryTab
-│   └── ui/                    # Card.tsx, ListPageLayout.tsx
-├── data/                      # dummyData.ts, statementData.ts
-├── types/                     # dashboard.ts, statement.ts
-└── utils/                     # constants.ts
+### Dynamic Route Prerendering & `<Suspense>` Boundaries
+When creating or modifying dynamic route pages (e.g., `app/statements/[id]/page.tsx`):
+- Dynamic route parameters (`params`) in Next.js App Router are asynchronous (`Promise<{ id: string }>`).
+- When unwrapping `params` using React's `use()` hook or dynamic fetching, the inner component **must** be wrapped in a `<Suspense>` boundary in the parent export page.
+- **Rule:** Never execute asynchronous route parameter unwrapping at the top level of a page export without a `<Suspense>` fallback, as this will fail during `npm run build` static prerendering.
+
+```tsx
+// Correct Pattern
+export default function DynamicPage({ params }: PageProps) {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <DynamicContent params={params} />
+    </Suspense>
+  );
+}
 ```
 
 ---
 
-## 4. Coding Style
+## 🎨 UI & Design Conventions
 
-- **Language:** TypeScript strict mode.
-- **Styling:** Tailwind CSS with high-density spacing, muted borders (`border-gray-200/80`), and clear status badges.
-- **Imports:** Use absolute path aliases (`@/components/...`, `@/types/...`, `@/data/...`) for all internal modules.
+### 1. Metric Cards Layout
+- Keep metric summary cards compact with reduced vertical padding (`px-3.5 py-2.5`) to preserve vertical screen real estate.
+- Use accent borders (`border-l-4`) with status-specific colors (e.g., `border-l-amber-400`, `border-l-blue-500`, `border-l-emerald-500`) to maintain consistent visual indicators.
+
+### 2. Status Badge Lifecycle
+- Maintain status configurations using centralized lookup objects (e.g., `STATUS_CONFIG`) rather than verbose `switch` or `if/else` statements.
+- **Lifecycle Flow:** `not_generated` $\rightarrow$ `draft` $\rightarrow$ `published`.
+- Ungenerated statements default to the amber **Not Generated** status badge.
+
+---
+
+## 🧪 Build & Verification Commands
+
+Before opening a pull request or committing changes, verify that all types and builds compile cleanly:
+
+```bash
+# Type check and build test
+npm run build
+```
