@@ -1,6 +1,6 @@
 // components/statements/LineItemsTab.tsx
 import { LineItem } from '@/types/statement';
-import { StatementCard } from './ui/StatementCard';
+import { Card } from '@/components/ui/Card';
 
 type LineItemsTabProps = {
   lineItems?: LineItem[];
@@ -16,7 +16,7 @@ export default function LineItemsTab({ lineItems }: LineItemsTabProps) {
   return (
     <div className="space-y-6">
       {/* Rental Income Section */}
-      <StatementCard title="Rental Income">
+      <Card title="Rental Income">
         <div className="overflow-x-auto">
           <table className="w-full text-xs table-fixed">
             <thead>
@@ -50,10 +50,10 @@ export default function LineItemsTab({ lineItems }: LineItemsTabProps) {
             </tfoot>
           </table>
         </div>
-      </StatementCard>
+      </Card>
 
       {/* Fees & Deductions Section */}
-      <StatementCard title="Fees & Deductions">
+      <Card title="Fees & Deductions">
         <div className="overflow-x-auto">
           <table className="w-full text-xs table-fixed">
             <thead>
@@ -101,7 +101,7 @@ export default function LineItemsTab({ lineItems }: LineItemsTabProps) {
             )}
           </table>
         </div>
-      </StatementCard>
+      </Card>
     </div>
   );
 }

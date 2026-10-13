@@ -1,6 +1,6 @@
 // components/statements/SummaryTab.tsx
 import { PropertyStatement } from '@/types/statement';
-import { StatementCard } from './ui/StatementCard';
+import { Card } from '@/components/ui/Card';
 
 type SummaryTabProps = {
   statement: PropertyStatement;
@@ -13,7 +13,7 @@ export default function SummaryTab({ statement }: SummaryTabProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Statement Summary Card */}
-      <StatementCard title="Statement Summary">
+      <Card title="Statement Summary">
         <div className="p-5">
           <dl className="space-y-3.5 text-xs">
             <div className="flex justify-between">
@@ -38,10 +38,10 @@ export default function SummaryTab({ statement }: SummaryTabProps) {
             </div>
           </dl>
         </div>
-      </StatementCard>
+      </Card>
 
       {/* Occupancy Card */}
-      <StatementCard title="Occupancy Metrics">
+      <Card title="Occupancy Metrics">
         <div className="p-5 space-y-4">
           <div>
             <div className="flex justify-between text-xs mb-1.5">
@@ -67,11 +67,11 @@ export default function SummaryTab({ statement }: SummaryTabProps) {
             </div>
           </div>
         </div>
-      </StatementCard>
+      </Card>
 
       {/* Reservations Table */}
       <div className="lg:col-span-2">
-        <StatementCard title="Reservations Breakdown">
+        <Card title="Reservations Breakdown">
           <div className="overflow-x-auto">
             <table className="min-w-full text-xs">
               <thead>
@@ -117,7 +117,7 @@ export default function SummaryTab({ statement }: SummaryTabProps) {
               </tfoot>
             </table>
           </div>
-        </StatementCard>
+        </Card>
       </div>
     </div>
   );

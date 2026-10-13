@@ -1,6 +1,6 @@
 // components/statements/AuditTab.tsx
 import { PropertyStatement } from '@/types/statement';
-import { StatementCard } from './ui/StatementCard';
+import { Card } from '@/components/ui/Card';
 
 type AuditTabProps = {
   statement?: PropertyStatement;
@@ -16,7 +16,7 @@ export default function AuditTab({ statement }: AuditTabProps) {
   return (
     <div className="space-y-6">
       {/* Reservation Data Card */}
-      <StatementCard title="Reservation Data">
+      <Card title="Reservation Data">
         <div className="overflow-x-auto">
           <table className="min-w-full text-xs">
             <thead>
@@ -81,10 +81,10 @@ export default function AuditTab({ statement }: AuditTabProps) {
             )}
           </table>
         </div>
-      </StatementCard>
+      </Card>
 
       {/* Stripe Charges Card */}
-      <StatementCard title="Stripe Charges">
+      <Card title="Stripe Charges">
         <div className="overflow-x-auto">
           <table className="min-w-full text-xs">
             <thead>
@@ -110,10 +110,10 @@ export default function AuditTab({ statement }: AuditTabProps) {
             </tbody>
           </table>
         </div>
-      </StatementCard>
+      </Card>
 
       {/* QBO Expenses Card */}
-      <StatementCard title="QBO Expenses">
+      <Card title="QBO Expenses">
         <div className="overflow-x-auto">
           <table className="min-w-full text-xs">
             <thead>
@@ -134,7 +134,7 @@ export default function AuditTab({ statement }: AuditTabProps) {
             </tbody>
           </table>
         </div>
-      </StatementCard>
+      </Card>
     </div>
   );
 }
