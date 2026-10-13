@@ -1,16 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from '../../store';
-
-function getPropertyInitials(name: string): string {
-  if (!name) return 'PR';
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((w: string) => w[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase();
-}
+import { getPropertyInitials } from '@/utils/formatters';
+import { 
+  getHostawayReservations, 
+  getQuickBooksExpenses, 
+  getStripeAdjustments 
+} from '@/utils/mockService';
+import { MONTHS } from '@/utils/constants';
 
 export async function GET(
   request: Request,
@@ -32,33 +28,19 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Property not found' }, { status: 404 });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
-    // 2. Fetch Hostaway reservations first to inspect channels
-    const resRes = await fetch(`${baseUrl}/api/hostaway/reservations?propertyId=${propertyId}`)
-      .then((r) => r.json())
-      .catch(() => ({ data: [] }));
-
-    const reservations = resRes.data || [];
+    // 2. Fetch data directly via service functions
+    const reservations = getHostawayReservations(propertyId);
 
     // Check if any reservation is from VRBO
     const hasVrboBooking = reservations.some(
       (r: any) => r.channel && r.channel.toLowerCase() === 'vrbo'
     );
 
-    // 3. Fetch QuickBooks expenses and conditionally fetch Stripe adjustments if VRBO exists
-    const [expRes, adjRes] = await Promise.all([
-      fetch(`${baseUrl}/api/quickbooks/expenses?propertyId=${propertyId}`).then((r) => r.json()).catch(() => ({ data: [] })),
-      hasVrboBooking
-        ? fetch(`${baseUrl}/api/stripe/adjustments?propertyId=${propertyId}`).then((r) => r.json()).catch(() => ({ data: [] }))
-        : Promise.resolve({ data: [] }),
-    ]);
-
-    const qboExpenses = expRes.data || [];
-    const stripeCharges = adjRes.data || [];
+    const qboExpenses = getQuickBooksExpenses(propertyId);
+    const stripeCharges = hasVrboBooking ? getStripeAdjustments(propertyId) : [];
     const expenses = [...qboExpenses, ...stripeCharges];
 
-    // 4. Core Financial Calculations
+    // 3. Core Financial Calculations
     const baseRentalIncome = reservations.reduce(
       (acc: number, r: any) => acc + (r.totalPrice - (r.cleaningFee || 0)),
       0
@@ -79,13 +61,12 @@ export async function GET(
     const occupancyRate = Number(((occupiedNights / totalNights) * 100).toFixed(1));
     const avgDailyRate = occupiedNights > 0 ? Math.round(baseRentalIncome / occupiedNights) : 0;
 
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    const monthYear = `${monthNames[parseInt(month, 10) - 1]} ${year}`;
+    // Use centralized MONTHS constant instead of a hardcoded array
+    const monthObj = MONTHS.find((m) => m.value === parseInt(month, 10));
+    const monthName = monthObj ? monthObj.label : 'October';
+    const monthYear = `${monthName} ${year}`;
 
-    // 5. Build Complete UI Line Items
+    // 4. Build Complete UI Line Items
     const reservationLineItems = reservations.map((r: any) => ({
       id: r.id,
       date: r.from,
