@@ -10,36 +10,27 @@ interface QueueProps {
   setSearchTerm: (term: string) => void;
 }
 
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string; border: string }> = {
+  not_generated: { label: 'Not Generated', bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500', border: 'border-amber-200/60' },
+  created: { label: 'Not Generated', bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500', border: 'border-amber-200/60' },
+  draft: { label: 'Draft', bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500', border: 'border-blue-200/60' },
+  published: { label: 'Published', bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500', border: 'border-emerald-200/60' },
+};
+
 export default function PropertyQueue({ properties, searchTerm, setSearchTerm }: QueueProps) {
-  const renderStatusBadge = (status: PropertyItem['status']) => {
-    switch (status) {
-      case 'not_generated':
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 border border-amber-200/60">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-            Not Generated
-          </span>
-        );
-      case 'draft':
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700 border border-blue-200/60">
-            <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-            Draft
-          </span>
-        );
-      case 'published':
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200/60">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-            Published
-          </span>
-        );
-    }
+  const renderStatusBadge = (status: string = 'not_generated') => {
+    const config = STATUS_CONFIG[status] || STATUS_CONFIG.not_generated;
+    return (
+      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${config.bg} ${config.text} border ${config.border}`}>
+        <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`}></span>
+        {config.label}
+      </span>
+    );
   };
 
   return (
     <div className="space-y-3 pt-2">
-      {/* Section Header and Search (Kept cleanly outside Card to avoid prop serialization issues) */}
+      {/* Header & Search */}
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-baseline space-x-2">
           <h2 className="text-base font-bold text-gray-900">Property Queue</h2>
@@ -63,7 +54,7 @@ export default function PropertyQueue({ properties, searchTerm, setSearchTerm }:
         </div>
       </div>
 
-      {/* Table Container wrapped in Card */}
+      {/* Table */}
       <Card title="Properties Overview">
         <table className="w-full text-left text-xs">
           <thead className="border-b border-gray-200 bg-gray-50/75 uppercase text-gray-400 font-semibold tracking-wider">
