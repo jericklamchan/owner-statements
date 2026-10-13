@@ -18,20 +18,25 @@ export default function StatementDetailPage({ params }: PageProps) {
   
   const [statement, setStatement] = useState<PropertyStatement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch statement data from our local mock aggregator API on mount
+  // Fetch statement data from local mock aggregator API on mount
   useEffect(() => {
     async function fetchStatement() {
       try {
         setIsLoading(true);
+        setError(null);
         const res = await fetch(`/api/statements/${resolvedParams.id}`);
         const data = await res.json();
         
-        if (data.success) {
+        if (data.success && data.statement) {
           setStatement(data.statement);
+        } else {
+          setError(data.error || 'Failed to load statement details.');
         }
-      } catch (error) {
-        console.error('Failed to load statement data:', error);
+      } catch (err) {
+        console.error('Failed to load statement data:', err);
+        setError('Network error loading statement data.');
       } finally {
         setIsLoading(false);
       }
@@ -40,12 +45,31 @@ export default function StatementDetailPage({ params }: PageProps) {
     fetchStatement();
   }, [resolvedParams.id]);
 
-  if (isLoading || !statement) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f8fafc] text-gray-900 pb-16">
         <NavBar />
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <p className="text-xs text-gray-500 animate-pulse">Loading live statement data from Hostaway, QuickBooks, & Stripe...</p>
+          <p className="text-xs text-gray-500 animate-pulse">
+            Loading live statement data from Hostaway, QuickBooks, & Stripe...
+          </p>
+        </main>
+      </div>
+    );
+  }
+
+  if (error || !statement) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-gray-900 pb-16">
+        <NavBar />
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+          <p className="text-sm font-medium text-red-600 mb-4">{error || 'Statement not found.'}</p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700"
+          >
+            &larr; Return to Dashboard
+          </Link>
         </main>
       </div>
     );
@@ -152,7 +176,7 @@ export default function StatementDetailPage({ params }: PageProps) {
 
         {/* Tab Views */}
         {activeTab === 'summary' && <SummaryTab statement={statement} />}
-        {activeTab === 'line-items' && <LineItemsTab lineItems={statement.lineItems} />}
+        {activeTab === 'line-items' && <LineItemsTab lineItems={statement.lineItems || []} />}
         {activeTab === 'audit' && <AuditTab statement={statement} />}
       </main>
     </div>

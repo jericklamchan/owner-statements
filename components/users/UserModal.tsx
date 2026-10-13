@@ -2,20 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import BaseModal from '@/components/ui/BaseModal';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-}
+import { UserRecord } from '@/types';
 
 interface UserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (user: User) => void;
-  userToEdit?: User | null;
+  onSuccess: (user: UserRecord) => void;
+  userToEdit?: UserRecord | null;
 }
 
 export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: UserModalProps) {
@@ -53,8 +46,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
       const data = await res.json();
       
       if (data.success) {
-        // Ensure the returned object satisfies the full User interface
-        const savedUser: User = data.user || {
+        const savedUser: UserRecord = data.user || {
           id: userToEdit?.id || `u-${Date.now()}`,
           name,
           email,
