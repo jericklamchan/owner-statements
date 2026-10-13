@@ -1,4 +1,3 @@
-// components/MetricsCards.tsx
 'use client';
 
 interface MetricsProps {

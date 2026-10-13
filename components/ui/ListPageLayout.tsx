@@ -1,4 +1,3 @@
-// components/ui/ListPageLayout.tsx
 'use client';
 
 import NavBar from '@/components/NavBar';

@@ -1,4 +1,3 @@
-// data/statementData.ts
 import { PropertyStatement } from '@/types/statement';
 
 export const MOCK_STATEMENTS: Record<string, PropertyStatement> = {

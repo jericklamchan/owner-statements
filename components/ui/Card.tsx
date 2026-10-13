@@ -1,4 +1,3 @@
-// components/ui/Card.tsx
 type CardProps = {
   title: string;
   children: React.ReactNode;

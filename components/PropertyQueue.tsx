@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Card } from '@/components/ui/Card';
 import { PropertyItem } from '@/types/dashboard';
 
 interface QueueProps {
@@ -38,7 +39,7 @@ export default function PropertyQueue({ properties, searchTerm, setSearchTerm }:
 
   return (
     <div className="space-y-3 pt-2">
-      {/* Section Header and Search */}
+      {/* Section Header and Search (Kept cleanly outside Card to avoid prop serialization issues) */}
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-baseline space-x-2">
           <h2 className="text-base font-bold text-gray-900">Property Queue</h2>
@@ -62,8 +63,8 @@ export default function PropertyQueue({ properties, searchTerm, setSearchTerm }:
         </div>
       </div>
 
-      {/* Table Container */}
-      <div className="overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-2xs">
+      {/* Table Container wrapped in Card */}
+      <Card title="Properties Overview">
         <table className="w-full text-left text-xs">
           <thead className="border-b border-gray-200 bg-gray-50/75 uppercase text-gray-400 font-semibold tracking-wider">
             <tr>
@@ -118,7 +119,7 @@ export default function PropertyQueue({ properties, searchTerm, setSearchTerm }:
             )}
           </tbody>
         </table>
-      </div>
+      </Card>
     </div>
   );
 }

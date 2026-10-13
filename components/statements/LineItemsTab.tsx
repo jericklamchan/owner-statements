@@ -1,4 +1,3 @@
-// components/statements/LineItemsTab.tsx
 import { LineItem } from '@/types/statement';
 import { Card } from '@/components/ui/Card';
 

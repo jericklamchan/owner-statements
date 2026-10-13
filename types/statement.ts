@@ -1,5 +1,3 @@
-// types/statement.ts
-
 export type ReservationItem = {
   id: string;
   channel: 'Airbnb' | 'VRBO' | 'Direct';

@@ -1,4 +1,3 @@
-// components/statements/SummaryTab.tsx
 import { PropertyStatement } from '@/types/statement';
 import { Card } from '@/components/ui/Card';
 

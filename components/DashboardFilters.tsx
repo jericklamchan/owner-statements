@@ -1,4 +1,3 @@
-// components/DashboardFilters.tsx
 'use client';
 
 import { YEARS, MONTHS } from '@/utils/constants';
