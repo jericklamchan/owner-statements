@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { use, useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import SummaryTab from '@/components/statements/SummaryTab';
@@ -12,7 +12,7 @@ type PageProps = {
   params: Promise<{ id: string }>;
 };
 
-export default function StatementDetailPage({ params }: PageProps) {
+function StatementDetailContent({ params }: PageProps) {
   const resolvedParams = use(params);
   const [activeTab, setActiveTab] = useState<'summary' | 'line-items' | 'audit'>('summary');
   
@@ -180,5 +180,19 @@ export default function StatementDetailPage({ params }: PageProps) {
         {activeTab === 'audit' && <AuditTab statement={statement} />}
       </main>
     </div>
+  );
+}
+
+export default function StatementDetailPage({ params }: PageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#f8fafc] text-gray-900 pb-16 flex items-center justify-center">
+          <p className="text-xs text-gray-500 animate-pulse">Loading statement view...</p>
+        </div>
+      }
+    >
+      <StatementDetailContent params={params} />
+    </Suspense>
   );
 }
