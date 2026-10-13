@@ -5,22 +5,37 @@ import NavBar from '@/components/NavBar';
 import DashboardFilters from '@/components/DashboardFilters';
 import MetricsCards from '@/components/MetricsCards';
 import PropertyQueue from '@/components/PropertyQueue';
-import { DUMMY_PROPERTIES } from '@/data/dummyData';
 
 export default function DashboardPage() {
+  const [properties, setProperties] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const [selectedYear, setSelectedYear] = useState<number>(2026);
-  const [selectedMonth, setSelectedMonth] = useState<number>(9);
+  const [selectedMonth, setSelectedMonth] = useState<number>(10);
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   useEffect(() => {
-    const now = new Date();
-    setSelectedYear(now.getFullYear());
-    setSelectedMonth(now.getMonth() + 1);
+    async function fetchProperties() {
+      try {
+        setIsLoading(true);
+        const res = await fetch('/api/statements');
+        const data = await res.json();
+        if (data.success) {
+          setProperties(data.properties);
+        }
+      } catch (error) {
+        console.error('Failed to load dashboard properties:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchProperties();
   }, []);
 
   const filteredProperties = useMemo(() => {
-    return DUMMY_PROPERTIES.filter((item) => {
+    return properties.filter((item) => {
       const matchYear = item.year === selectedYear;
       const matchMonth = item.month === selectedMonth;
       const matchStatus = selectedStatus === 'All' || item.status === selectedStatus;
@@ -30,10 +45,10 @@ export default function DashboardPage() {
 
       return matchYear && matchMonth && matchStatus && matchSearch;
     });
-  }, [selectedYear, selectedMonth, selectedStatus, searchTerm]);
+  }, [properties, selectedYear, selectedMonth, selectedStatus, searchTerm]);
 
   const metrics = useMemo(() => {
-    const list = DUMMY_PROPERTIES.filter(
+    const list = properties.filter(
       (p) => p.year === selectedYear && p.month === selectedMonth
     );
 
@@ -45,7 +60,18 @@ export default function DashboardPage() {
       totalOwnerPayout: list.reduce((acc, curr) => acc + (curr.ownerPayout || 0), 0),
       totalCommission: list.reduce((acc, curr) => acc + (curr.commission || 0), 0),
     };
-  }, [selectedYear, selectedMonth]);
+  }, [properties, selectedYear, selectedMonth]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-gray-900 pb-16">
+        <NavBar />
+        <main className="mx-auto max-w-5xl px-4 py-16 text-center text-xs text-gray-500 animate-pulse">
+          Loading dashboard data...
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-gray-900 pb-16">

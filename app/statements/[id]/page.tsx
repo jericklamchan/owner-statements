@@ -1,12 +1,12 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
-import { MOCK_STATEMENTS } from '@/data/statementData';
 import SummaryTab from '@/components/statements/SummaryTab';
 import LineItemsTab from '@/components/statements/LineItemsTab';
 import AuditTab from '@/components/statements/AuditTab';
+import { PropertyStatement } from '@/types/statement';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -16,7 +16,40 @@ export default function StatementDetailPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const [activeTab, setActiveTab] = useState<'summary' | 'line-items' | 'audit'>('summary');
   
-  const statement = MOCK_STATEMENTS[resolvedParams.id] || MOCK_STATEMENTS['1'];
+  const [statement, setStatement] = useState<PropertyStatement | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch statement data from our local mock aggregator API on mount
+  useEffect(() => {
+    async function fetchStatement() {
+      try {
+        setIsLoading(true);
+        const res = await fetch(`/api/statements/${resolvedParams.id}`);
+        const data = await res.json();
+        
+        if (data.success) {
+          setStatement(data.statement);
+        }
+      } catch (error) {
+        console.error('Failed to load statement data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchStatement();
+  }, [resolvedParams.id]);
+
+  if (isLoading || !statement) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-gray-900 pb-16">
+        <NavBar />
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+          <p className="text-xs text-gray-500 animate-pulse">Loading live statement data from Hostaway, QuickBooks, & Stripe...</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-gray-900 pb-16">
@@ -49,7 +82,10 @@ export default function StatementDetailPage({ params }: PageProps) {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <button className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 shadow-2xs transition-all cursor-pointer">
+            <button 
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 shadow-2xs transition-all cursor-pointer"
+            >
               Refresh
             </button>
             <button className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-2xs hover:bg-blue-700 active:scale-95 transition-all cursor-pointer">
