@@ -1,41 +1,58 @@
-# AI Agent Directives & Code Conventions
+# AGENTS.md - Developer & AI Assistant Guidelines
 
-This document provides context, conventions, and guidelines for AI coding agents working on the **Owner Statements** repository.
-
----
-
-## 1. Project Context
-
-- **Domain:** Property Management & Owner Financial Statements
-- **Stack:** Next.js (App Router), TypeScript, Tailwind CSS
-- **Design Philosophy:** High-density, modern SaaS aesthetic inspired by Stripe/Vercel (compact padding, refined micro-typography, clean borders).
+This document outlines the architectural rules, coding standards, and framework patterns for the **Owner Statements Dashboard** project. All contributors and AI assistants must adhere to these guidelines.
 
 ---
 
-## 2. Directory Structure & Responsibilities
+## 1. Architecture & Component Standards
 
-- `app/`: Next.js App Router routes, page layouts, and global styles (`globals.css`).
-- `components/`: Pure presentation or client components. Keep them focused and modular.
-- `data/`: Mock data definitions (`dummyData.ts`) used during development.
-- `types/`: Core TypeScript interfaces and type declarations (`dashboard.ts`).
-- `utils/`: Shared utility functions, constants (`constants.ts`), and helpers.
-
----
-
-## 3. Core Coding Rules
-
-1. **TypeScript First:** Always provide strict types for props, states, and function returns. Avoid using `any`.
-2. **Tailwind Styling:**
-   - Maintain the high-density layout paradigm (`max-w-5xl`, compact padding like `p-3`, `p-4`, and small typography like `text-xs`, `text-sm`).
-   - Use soft subtle borders (`border-gray-200/80`) and low-blur shadows (`shadow-2xs`).
-3. **Icons & Controls:**
-   - Use inline SVG icons or standard icon libraries rather than bulky text-only buttons in table rows/actions.
-   - Keep interactive controls responsive with hover and active states (`active:scale-95 transition-all`).
-4. **Client Components:** Mark interactive UI files with `'use client';` at the top. Keep server components clean when backend integration is introduced.
+- **UI Primitives & Layouts:** 
+  - Utilize shared primitives like the unified `Card` component (`components/ui/Card.tsx`) and `ListPageLayout` (`components/ui/ListPageLayout.tsx`) across all views to ensure a consistent Stripe/Vercel-inspired SaaS look and feel.
+  - Maintain clean separation between high-level page containers (`app/`) and modular subcomponents (`components/`).
+- **Statement Subviews:** 
+  - Statement detail tabs must be isolated into modular components (`SummaryTab`, `LineItemsTab`, `AuditTab`) located under `components/statements/`.
+- **Data Integrity & Fallbacks:**
+  - Always implement robust safety checks (`?? 0`, `?? []`, optional chaining `?.`) on all dynamic props, financial calculations (`toFixed`), and array lookups to prevent runtime crashes during initial loads.
 
 ---
 
-## 4. Workflows & State Management
+## 2. Next.js App Router & Build Compliance
 
-- Use standard Next.js state mechanisms (`useState`, `useMemo`) for local filter, search, and client-side calculations.
-- Future backend updates should preserve existing component prop signatures whenever possible to avoid interface breaking changes.
+- **Dynamic Route Parameters:**
+  - Dynamic route pages (e.g., `app/statements/[id]/page.tsx`) must wrap request-bound parameters (`params`) and content using React `Suspense` boundaries to satisfy Next.js prerender requirements.
+  - Defer the `use(params)` call inside child components wrapped by `<Suspense>` rather than executing it synchronously at the parent page root.
+- **Client-Side Hooks (`usePathname`):**
+  - Any client component invoking runtime URL hooks like `usePathname()` (such as `NavBar.tsx`) must be structured with an internal content component wrapped in a `Suspense` boundary to prevent build prerender warnings.
+
+---
+
+## 3. Directory Structure Reference
+
+```text
+owner-statements/
+├── app/
+│   ├── layout.tsx             # Root layout and metadata
+│   ├── page.tsx               # Main dashboard view
+│   ├── globals.css            # Global Tailwind stylesheet
+│   ├── properties/            # Properties management view
+│   ├── statements/[id]/       # Dynamic statement detail page
+│   └── users/                 # Users management view
+├── components/
+│   ├── DashboardFilters.tsx   # Filter controls
+│   ├── MetricCards.tsx        # KPI summary cards
+│   ├── NavBar.tsx             # Top navigation bar (Suspense-wrapped)
+│   ├── PropertyQueue.tsx      # Main statement table
+│   ├── statements/            # AuditTab, LineItemsTab, SummaryTab
+│   └── ui/                    # Card.tsx, ListPageLayout.tsx
+├── data/                      # dummyData.ts, statementData.ts
+├── types/                     # dashboard.ts, statement.ts
+└── utils/                     # constants.ts
+```
+
+---
+
+## 4. Coding Style
+
+- **Language:** TypeScript strict mode.
+- **Styling:** Tailwind CSS with high-density spacing, muted borders (`border-gray-200/80`), and clear status badges.
+- **Imports:** Use absolute path aliases (`@/components/...`, `@/types/...`, `@/data/...`) for all internal modules.
