@@ -1,3 +1,5 @@
+// types/statement.ts
+
 export type ReservationItem = {
   id: string;
   channel: 'Airbnb' | 'VRBO' | 'Direct';
@@ -19,6 +21,23 @@ export type ExpenseItem = {
   amount: number;
 };
 
+export type LineItem = {
+  id: string;
+  date: string;
+  description: string;
+  category: string;
+  source: 'Hostaway' | 'QuickBooks' | 'Stripe';
+  amount: number;
+};
+
+export type AuditEntry = {
+  id: string;
+  timestamp: string;
+  actor: string;
+  action: string;
+  details: string;
+};
+
 export type PropertyStatement = {
   id: string;
   propertyName: string;
@@ -37,5 +56,7 @@ export type PropertyStatement = {
   avgDailyRate: number;
   reservations: ReservationItem[];
   expenses: ExpenseItem[];
+  lineItems?: LineItem[];
+  auditLogs?: AuditEntry[];
   apiError?: string;
 };
