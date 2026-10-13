@@ -10,6 +10,7 @@ import { PropertyStatement, StatementAdjustment } from '@/types/statement';
 import StatementHeader from './StatementHeader';
 import StatementActions from './StatementActions';
 import StatementMetrics from './StatementMetrics';
+import StatementInvoiceHeader from '@/components/statements/summary/StatementInvoiceHeader';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -106,13 +107,18 @@ function StatementDetailContent({ params }: PageProps) {
   }
 
   const isDraft = statement.status === 'draft';
+  const isPublished = statement.status === 'published';
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-gray-900 pb-16">
-      <NavBar />
+    <div className="min-h-screen bg-[#f8fafc] print:bg-white text-gray-900 pb-16 print:pb-0 print:p-0">
+      {/* Hide navigation bar on print */}
+      <div className="print:hidden">
+        <NavBar />
+      </div>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-gray-200/80">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 print:p-0 print:max-w-full print:w-full">
+        {/* Hide top action bar on print */}
+        <div className="print:hidden flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-gray-200/80">
           <StatementHeader
             propertyName={statement.propertyName}
             ownerName={statement.ownerName}
@@ -130,9 +136,21 @@ function StatementDetailContent({ params }: PageProps) {
           />
         </div>
 
-        <StatementMetrics statement={statement} />
+        {/* Invoice Header */}
+        {isPublished && (
+          <StatementInvoiceHeader
+            statementId={statement.id}
+            monthYear={statement.monthYear}
+          />
+        )}
 
-        <div className="border-b border-gray-200 mb-6">
+        {/* Standard Statement Metrics Row */}
+        <div className="mb-6 print:mb-4">
+          <StatementMetrics statement={statement} />
+        </div>
+
+        {/* Hide tab navigation on print */}
+        <div className="print:hidden border-b border-gray-200 mb-6">
           <nav className="flex space-x-6">
             <button
               onClick={() => setActiveTab('summary')}
@@ -167,15 +185,18 @@ function StatementDetailContent({ params }: PageProps) {
           </nav>
         </div>
 
-        {activeTab === 'summary' && (
-          <SummaryTab 
-            statement={statement} 
-            onUpdateAdjustments={(newAdjustments) => patchStatement({ adjustments: newAdjustments })} 
-            isDraft={isDraft}
-          />
-        )}
-        {activeTab === 'line-items' && <LineItemsTab lineItems={statement.lineItems || []} />}
-        {activeTab === 'audit' && <AuditTab statement={statement} />}
+        {/* Print wrapper to scale or constrain page break behavior */}
+        <div className="print:space-y-4">
+          {activeTab === 'summary' && (
+            <SummaryTab 
+              statement={statement} 
+              onUpdateAdjustments={(newAdjustments) => patchStatement({ adjustments: newAdjustments })} 
+              isDraft={isDraft}
+            />
+          )}
+          {activeTab === 'line-items' && <LineItemsTab lineItems={statement.lineItems || []} />}
+          {activeTab === 'audit' && <AuditTab statement={statement} />}
+        </div>
       </main>
     </div>
   );

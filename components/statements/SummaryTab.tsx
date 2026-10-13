@@ -4,6 +4,7 @@ import { PropertyStatement, StatementAdjustment } from '@/types/statement';
 import StatementSummaryCard from './summary/StatementSummaryCard';
 import OccupancyMetricsCard from './summary/OccupancyMetricsCard';
 import ReservationsTable from './summary/ReservationsTable';
+import ExpensesTable from './summary/ExpensesTable';
 import AdjustmentsSection from './summary/AdjustmentsSection';
 
 type SummaryTabProps = {
@@ -23,6 +24,9 @@ export default function SummaryTab({ statement, onUpdateAdjustments, isDraft }: 
 
       {/* Reservations Breakdown Table */}
       <ReservationsTable reservations={statement.reservations} />
+
+      {/* Property Expenses Table */}
+      <ExpensesTable expenses={statement.expenses} />
 
       {/* Adjustments Section (Editable in Draft, Read-Only when Published) */}
       <AdjustmentsSection

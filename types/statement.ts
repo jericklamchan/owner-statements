@@ -26,7 +26,15 @@ export type StatementAdjustment = {
   id: string;
   date: string;
   description: string;
-  amount: number; // positive for addition, negative for deduction
+  amount: number;
+};
+
+export type StatementExpense = {
+  id?: string;
+  date?: string;
+  category?: string;
+  description?: string;
+  amount: number;
 };
 
 export type LineItem = {
