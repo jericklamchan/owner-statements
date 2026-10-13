@@ -1,10 +1,12 @@
+// types/statement.ts
+
 export type ReservationItem = {
   id: string;
-  channel: 'Airbnb' | 'VRBO' | 'Direct';
+  channel: 'Airbnb' | 'Vrbo' | 'VRBO' | 'Direct';
   from: string;
   to: string;
   nights: number;
-  status: 'new' | 'modified' | 'cancelled';
+  status: 'new' | 'modified' | 'cancelled' | 'Confirmed';
   totalPrice: number;
   cleaningFee: number;
   channelFee?: number;
@@ -14,9 +16,12 @@ export type ReservationItem = {
 export type ExpenseItem = {
   id: string;
   date: string;
-  vendor: string;
+  description?: string;
+  vendor?: string;
   category: string;
   amount: number;
+  type?: 'expense';
+  source?: 'QuickBooks' | 'Stripe' | 'Internal System';
 };
 
 export type LineItem = {
@@ -24,8 +29,9 @@ export type LineItem = {
   date: string;
   description: string;
   category: string;
-  source: 'Hostaway' | 'QuickBooks' | 'Stripe';
+  source: 'Hostaway' | 'QuickBooks' | 'Stripe' | 'Internal System';
   amount: number;
+  type: 'income' | 'expense';
 };
 
 export type AuditEntry = {
@@ -36,12 +42,28 @@ export type AuditEntry = {
   details: string;
 };
 
+export type QuickbooksSyncInfo = {
+  syncStatus: string;
+  journalEntryId: string;
+  lastSyncedAt: string;
+};
+
+export type StripePayoutInfo = {
+  transferId: string;
+  payoutStatus: string;
+  destinationAccount: string;
+};
+
 export type PropertyStatement = {
   id: string;
+  propertyId: string;
   propertyName: string;
   ownerName: string;
+  avatarInitials?: string;
   monthYear: string;
-  status: 'Not Generated' | 'Draft' | 'Published';
+  year: number;
+  month: number;
+  status: 'Not Generated' | 'Draft' | 'Published' | string;
   totalPayout: number;
   grossRevenue: number;
   mgmtFee: number;
@@ -54,7 +76,11 @@ export type PropertyStatement = {
   avgDailyRate: number;
   reservations: ReservationItem[];
   expenses: ExpenseItem[];
+  qboExpenses?: ExpenseItem[];
+  stripeCharges?: ExpenseItem[];
   lineItems?: LineItem[];
   auditLogs?: AuditEntry[];
+  quickbooksSync?: QuickbooksSyncInfo;
+  stripePayout?: StripePayoutInfo;
   apiError?: string;
 };

@@ -4,9 +4,7 @@ import { PropertyStatement } from '@/types/statement';
 import StatementSection from '@/components/ui/StatementSection';
 
 type SummaryTabProps = {
-  statement: PropertyStatement & {
-    stripeCharges?: Array<{ amount: number }>;
-  };
+  statement: PropertyStatement;
 };
 
 export default function SummaryTab({ statement }: SummaryTabProps) {
@@ -14,7 +12,7 @@ export default function SummaryTab({ statement }: SummaryTabProps) {
   const totalCleaningFee = statement.reservations.reduce((acc, res) => acc + res.cleaningFee, 0);
   const hasReservations = statement.reservations.length > 0;
 
-  // Compute Stripe fees (if any exist)
+  // Compute Stripe fees (if any exist) using the typed property statement
   const stripeFeesTotal = statement.stripeCharges?.reduce((acc, charge) => acc + charge.amount, 0) || 0;
   const hasStripeFees = stripeFeesTotal > 0;
 

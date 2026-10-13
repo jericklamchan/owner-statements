@@ -1,38 +1,10 @@
 'use client';
 
+import { PropertyStatement } from '@/types/statement';
 import StatementSection from '@/components/ui/StatementSection';
 
-type ReservationItem = {
-  id: string;
-  channel: string;
-  totalPrice: number;
-  cleaningFee: number;
-};
-
-type StripeCharge = {
-  id: string;
-  reservationId?: string;
-  type: string;
-  description: string;
-  amount: number;
-  date: string;
-  status?: string;
-};
-
-type QboExpense = {
-  id: string;
-  date: string;
-  description: string;
-  category: string;
-  amount: number;
-};
-
 type AuditTabProps = {
-  statement?: {
-    reservations?: ReservationItem[];
-    stripeCharges?: StripeCharge[];
-    qboExpenses?: QboExpense[];
-  };
+  statement?: PropertyStatement;
 };
 
 export default function AuditTab({ statement }: AuditTabProps) {
@@ -45,12 +17,12 @@ export default function AuditTab({ statement }: AuditTabProps) {
   const hasQboExpenses = qboExpenses.length > 0;
 
   // Calculate totals safely
-  const totalBaseRate = reservations.reduce((sum, res) => sum + res.totalPrice, 0);
+  const totalBaseRate = reservations.reduce((sum, res) => sum + (res.totalPrice - res.cleaningFee), 0);
   const totalCleaningFee = reservations.reduce((sum, res) => sum + res.cleaningFee, 0);
   const totalLodgingTax = reservations.length * 75.00;
   const totalStripeFees = stripeCharges.reduce((sum, charge) => sum + charge.amount, 0);
-  const totalPaid = totalBaseRate + totalCleaningFee + totalLodgingTax;
-  const totalActualIncome = totalBaseRate + totalCleaningFee - totalStripeFees;
+  const totalPaid = (reservations.reduce((sum, res) => sum + res.totalPrice, 0)) + totalLodgingTax;
+  const totalActualIncome = (reservations.reduce((sum, res) => sum + res.totalPrice, 0)) - totalStripeFees;
 
   return (
     <div className="space-y-6">
@@ -64,9 +36,8 @@ export default function AuditTab({ statement }: AuditTabProps) {
           <thead>
             <tr className="bg-gray-50/75 border-b border-gray-200 uppercase text-gray-400 font-semibold tracking-wider">
               <th className="px-5 py-3 text-left">ID</th>
-              <th className="px-5 py-3 text-left">Guest</th>
+              <th className="px-5 py-3 text-left">Channel</th>
               <th className="px-5 py-3 text-right">Base Rate</th>
-              <th className="px-5 py-3 text-right">Adj. Base Rate</th>
               <th className="px-5 py-3 text-right">Cleaning Fee</th>
               <th className="px-5 py-3 text-center">Host Channel Fee</th>
               <th className="px-5 py-3 text-center">Stripe Fees</th>
@@ -78,19 +49,17 @@ export default function AuditTab({ statement }: AuditTabProps) {
           <tbody className="divide-y divide-gray-100">
             {reservations.map((res) => {
               const isVrbo = res.channel.toLowerCase() === 'vrbo';
-              const guestName = res.channel === 'Airbnb' ? 'Sarah Jenkins' : 'Michael Chang';
+              const baseRate = res.totalPrice - res.cleaningFee;
               const lodgingTax = 75.00;
-              // Attach stripe fee if VRBO matches
               const stripeFeeRow = isVrbo ? 15.00 : 0;
-              const totalPaidRow = res.totalPrice + res.cleaningFee + lodgingTax;
-              const actualIncomeRow = res.totalPrice + res.cleaningFee - stripeFeeRow;
+              const totalPaidRow = res.totalPrice + lodgingTax;
+              const actualIncomeRow = res.totalPrice - stripeFeeRow;
 
               return (
                 <tr key={res.id} className="hover:bg-gray-50/80 transition-colors">
                   <td className="px-5 py-3 font-mono text-gray-500">{res.id}</td>
-                  <td className="px-5 py-3 font-medium text-gray-900">{guestName}</td>
-                  <td className="px-5 py-3 text-right text-gray-700">${res.totalPrice.toFixed(2)}</td>
-                  <td className="px-5 py-3 text-right text-gray-700">${res.totalPrice.toFixed(2)}</td>
+                  <td className="px-5 py-3 font-medium text-gray-900">{res.channel}</td>
+                  <td className="px-5 py-3 text-right text-gray-700">${baseRate.toFixed(2)}</td>
                   <td className="px-5 py-3 text-right text-gray-700">${res.cleaningFee.toFixed(2)}</td>
                   <td className="px-5 py-3 text-center text-gray-300">&mdash;</td>
                   <td className="px-5 py-3 text-center text-gray-700">
@@ -106,7 +75,6 @@ export default function AuditTab({ statement }: AuditTabProps) {
           <tfoot>
             <tr className="border-t-2 border-gray-200 bg-gray-50/75 font-bold text-gray-900 text-xs">
               <td colSpan={2} className="px-5 py-3">Totals</td>
-              <td className="px-5 py-3 text-right">${totalBaseRate.toFixed(2)}</td>
               <td className="px-5 py-3 text-right">${totalBaseRate.toFixed(2)}</td>
               <td className="px-5 py-3 text-right">${totalCleaningFee.toFixed(2)}</td>
               <td className="px-5 py-3 text-center text-gray-400">&mdash;</td>
@@ -169,7 +137,7 @@ export default function AuditTab({ statement }: AuditTabProps) {
               <tr key={expense.id} className="hover:bg-gray-50/80 transition-colors">
                 <td className="px-5 py-3 text-gray-600">{expense.date}</td>
                 <td className="px-5 py-3 text-gray-700 font-medium">{expense.category}</td>
-                <td className="px-5 py-3 text-gray-600">{expense.description}</td>
+                <td className="px-5 py-3 text-gray-600">{expense.description || expense.vendor}</td>
                 <td className="px-5 py-3 text-right font-medium text-gray-900">${expense.amount.toFixed(2)}</td>
               </tr>
             ))}

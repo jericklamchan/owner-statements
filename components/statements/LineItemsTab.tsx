@@ -7,9 +7,9 @@ type LineItemsTabProps = {
   lineItems?: LineItem[];
 };
 
-export default function LineItemsTab({ lineItems }: LineItemsTabProps) {
-  const rentalItems = lineItems?.filter(item => item.category === 'Rental Income' || item.category === 'Cleaning Fee') || [];
-  const feeItems = lineItems?.filter(item => item.category !== 'Rental Income' && item.category !== 'Cleaning Fee') || [];
+export default function LineItemsTab({ lineItems = [] }: LineItemsTabProps) {
+  const rentalItems = lineItems.filter(item => item.category === 'Rental Income' || item.category === 'Cleaning Fee');
+  const feeItems = lineItems.filter(item => item.category !== 'Rental Income' && item.category !== 'Cleaning Fee');
 
   const rentalTotal = rentalItems.reduce((acc, item) => acc + item.amount, 0);
   const feeTotal = feeItems.reduce((acc, item) => acc + item.amount, 0);
