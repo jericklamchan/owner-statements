@@ -24,13 +24,12 @@ export default function SummaryTab({ statement, onUpdateAdjustments, isDraft }: 
       {/* Reservations Breakdown Table */}
       <ReservationsTable reservations={statement.reservations} />
 
-      {/* Adjustments Section (Draft mode only) */}
-      {isDraft && (
-        <AdjustmentsSection
-          adjustments={statement.adjustments}
-          onUpdateAdjustments={onUpdateAdjustments}
-        />
-      )}
+      {/* Adjustments Section (Editable in Draft, Read-Only when Published) */}
+      <AdjustmentsSection
+        adjustments={statement.adjustments}
+        onUpdateAdjustments={onUpdateAdjustments}
+        isDraft={isDraft}
+      />
     </div>
   );
 }
