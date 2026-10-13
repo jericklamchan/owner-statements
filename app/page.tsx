@@ -36,31 +36,27 @@ export default function DashboardPage() {
 
   const filteredProperties = useMemo(() => {
     return properties.filter((item) => {
-      const matchYear = item.year === selectedYear;
-      const matchMonth = item.month === selectedMonth;
       const matchStatus = selectedStatus === 'All' || item.status === selectedStatus;
       const matchSearch =
         item.propertyName.toLowerCase().includes(searchTerm.toLowerCase().trim()) ||
         item.ownerName.toLowerCase().includes(searchTerm.toLowerCase().trim());
 
-      return matchYear && matchMonth && matchStatus && matchSearch;
+      return matchStatus && matchSearch;
     });
-  }, [properties, selectedYear, selectedMonth, selectedStatus, searchTerm]);
+  }, [properties, selectedStatus, searchTerm]);
 
   const metrics = useMemo(() => {
-    const list = properties.filter(
-      (p) => p.year === selectedYear && p.month === selectedMonth
-    );
+    const list = properties;
 
     return {
-      notGenerated: list.filter((p) => p.status === 'not_generated').length,
+      notGenerated: list.filter((p) => p.status === 'not_generated' || p.status === 'created').length,
       draft: list.filter((p) => p.status === 'draft').length,
       published: list.filter((p) => p.status === 'published').length,
       totalProperties: list.length,
       totalOwnerPayout: list.reduce((acc, curr) => acc + (curr.ownerPayout || 0), 0),
       totalCommission: list.reduce((acc, curr) => acc + (curr.commission || 0), 0),
     };
-  }, [properties, selectedYear, selectedMonth]);
+  }, [properties]);
 
   if (isLoading) {
     return (

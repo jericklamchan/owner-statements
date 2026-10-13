@@ -12,30 +12,6 @@ function getPropertyInitials(name: string): string {
     .toUpperCase();
 }
 
-// Helper to simulate realistic statement financials based on property ID, year, and month
-function simulateStatementData(propertyId: string, year: number, month: number) {
-  let hash = 0;
-  const str = `${propertyId}-${year}-${month}`;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-  const positiveHash = Math.abs(hash);
-
-  const ownerPayout = 1200 + (positiveHash % 3300);
-  const commission = Math.round(ownerPayout * 0.18);
-  const statuses: ('not_generated' | 'draft' | 'published')[] = ['published', 'published', 'draft', 'not_generated'];
-  const status = statuses[positiveHash % statuses.length];
-
-  return {
-    year,
-    month,
-    ownerPayout,
-    commission,
-    status,
-  };
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const yearParam = searchParams.get('year');
@@ -46,15 +22,15 @@ export async function GET(request: Request) {
 
   const rawProperties = getCollection('properties').filter((p: any) => p.status !== 'deleted');
 
-  // Enrich base properties with computed 2-char initials and simulated monthly statement metrics
-  const properties = rawProperties.map((p: any) => {
-    const statement = simulateStatementData(p.id, year, month);
-    return {
-      ...p,
-      avatarInitials: getPropertyInitials(p.propertyName),
-      ...statement,
-    };
-  });
+  // Normalize properties with safe default financial fields to prevent UI crashes
+  const properties = rawProperties.map((p: any) => ({
+    ...p,
+    avatarInitials: p.avatarInitials || getPropertyInitials(p.propertyName),
+    status: p.status || 'created',
+    ownerPayout: p.ownerPayout ?? 0,
+    commission: p.commission ?? 0,
+    grossRevenue: p.grossRevenue ?? 0,
+  }));
 
   return NextResponse.json({ success: true, properties });
 }
@@ -64,7 +40,7 @@ export async function POST(request: Request) {
   const propertyName = body.propertyName || 'New Property';
 
   const newProperty = {
-    id: Date.now().toString(),
+    id: body.id || Date.now().toString(), // Allows specifying '2' for Sunset Villa during your demo if desired
     propertyName,
     ownerName: body.ownerName || 'Unknown Owner',
     address: body.address || '',
@@ -72,6 +48,9 @@ export async function POST(request: Request) {
     country: body.country || '',
     avatarInitials: getPropertyInitials(propertyName),
     status: 'created' as const,
+    ownerPayout: 0,
+    commission: 0,
+    grossRevenue: 0,
   };
 
   addToCollection('properties', newProperty);

@@ -1,4 +1,16 @@
 import { NextResponse } from 'next/server';
+import { getCollection } from '../../store';
+
+function getPropertyInitials(name: string): string {
+  if (!name) return 'PR';
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((w: string) => w[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
+}
 
 export async function GET(
   request: Request,
@@ -8,79 +20,127 @@ export async function GET(
     const resolvedParams = await params;
     const propertyId = resolvedParams.id;
 
+    const { searchParams } = new URL(request.url);
+    const year = searchParams.get('year') || '2026';
+    const month = searchParams.get('month') || '10';
+
+    // 1. Get base property details from store (db.json)
+    const properties = getCollection('properties');
+    const property = properties.find((p: any) => p.id === propertyId);
+
+    if (!property) {
+      return NextResponse.json({ success: false, error: 'Property not found' }, { status: 404 });
+    }
+
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-    // Fetch from internal mock API routes concurrently
-    const [resRes, expRes, adjRes] = await Promise.all([
-      fetch(`${baseUrl}/api/hostaway/reservations`).then((r) => r.json()),
-      fetch(`${baseUrl}/api/quickbooks/expenses`).then((r) => r.json()),
-      fetch(`${baseUrl}/api/stripe/adjustments`).then((r) => r.json()),
-    ]);
+    // 2. Fetch Hostaway reservations first to inspect channels
+    const resRes = await fetch(`${baseUrl}/api/hostaway/reservations?propertyId=${propertyId}`)
+      .then((r) => r.json())
+      .catch(() => ({ data: [] }));
 
     const reservations = resRes.data || [];
-    const expenses = [...(expRes.data || []), ...(adjRes.data || [])];
 
-    // Core Financial Calculations
+    // Check if any reservation is from VRBO
+    const hasVrboBooking = reservations.some(
+      (r: any) => r.channel && r.channel.toLowerCase() === 'vrbo'
+    );
+
+    // 3. Fetch QuickBooks expenses and conditionally fetch Stripe adjustments if VRBO exists
+    const [expRes, adjRes] = await Promise.all([
+      fetch(`${baseUrl}/api/quickbooks/expenses?propertyId=${propertyId}`).then((r) => r.json()).catch(() => ({ data: [] })),
+      hasVrboBooking
+        ? fetch(`${baseUrl}/api/stripe/adjustments?propertyId=${propertyId}`).then((r) => r.json()).catch(() => ({ data: [] }))
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const qboExpenses = expRes.data || [];
+    const stripeCharges = adjRes.data || [];
+    const expenses = [...qboExpenses, ...stripeCharges];
+
+    // 4. Core Financial Calculations
     const baseRentalIncome = reservations.reduce(
-      (acc: number, r: any) => acc + (r.totalPrice - r.cleaningFee),
+      (acc: number, r: any) => acc + (r.totalPrice - (r.cleaningFee || 0)),
       0
     );
     const cleaningFees = reservations.reduce(
-      (acc: number, r: any) => acc + r.cleaningFee,
+      (acc: number, r: any) => acc + (r.cleaningFee || 0),
       0
     );
     
-    // 20% Management fee on base rental income
-    const mgmtFee = baseRentalIncome * 0.20;
-    const totalExpenses = expenses.reduce((acc: number, e: any) => acc + e.amount, 0);
+    const mgmtFee = Math.round(baseRentalIncome * 0.18); // 18% management fee
+    const totalExpenses = expenses.reduce((acc: number, e: any) => acc + (e.amount || 0), 0);
     const grossRevenue = baseRentalIncome + cleaningFees;
     const totalPayout = grossRevenue - mgmtFee - totalExpenses;
 
     // Performance Metrics
     const totalNights = 31;
-    const occupiedNights = reservations.reduce((acc: number, r: any) => acc + r.nights, 0);
+    const occupiedNights = reservations.reduce((acc: number, r: any) => acc + (r.nights || 0), 0);
     const occupancyRate = Number(((occupiedNights / totalNights) * 100).toFixed(1));
-    const avgDailyRate = occupiedNights > 0 ? baseRentalIncome / occupiedNights : 0;
+    const avgDailyRate = occupiedNights > 0 ? Math.round(baseRentalIncome / occupiedNights) : 0;
 
-    // 1. Build Rental Income Line Items
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const monthYear = `${monthNames[parseInt(month, 10) - 1]} ${year}`;
+
+    // 5. Build Complete UI Line Items
     const reservationLineItems = reservations.map((r: any) => ({
       id: r.id,
       date: r.from,
       description: `Reservation Payout (${r.channel}) - ${r.nights} nights`,
-      category: 'Rental Income', // Matches LineItemsTab filter
-      amount: r.totalPrice - r.cleaningFee,
+      category: 'Rental Income',
+      amount: r.totalPrice - (r.cleaningFee || 0),
       type: 'income',
       source: 'Hostaway',
     }));
 
-    // 2. Build Cleaning Fee Line Items
     const cleaningLineItems = reservations.map((r: any) => ({
       id: `${r.id}-clean`,
       date: r.from,
       description: `Cleaning Fee Collected (${r.channel})`,
-      category: 'Cleaning Fee', // Matches LineItemsTab filter
-      amount: r.cleaningFee,
+      category: 'Cleaning Fee',
+      amount: r.cleaningFee || 0,
       type: 'income',
       source: 'Hostaway',
     }));
 
-    // 3. Build Expense & Adjustment Line Items
+    const mgmtFeeLineItem = mgmtFee > 0 ? [{
+      id: `MGMT-${property.id}`,
+      date: `${year}-${month}-01`,
+      description: 'Management Fee (18% of Base Rental Income)',
+      category: 'Management Fee',
+      amount: mgmtFee,
+      type: 'expense',
+      source: 'Internal System',
+    }] : [];
+
     const expenseLineItems = expenses.map((e: any) => ({
       id: e.id,
       date: e.date,
       description: e.description,
-      category: e.category || 'Maintenance', // Anything else goes to Fees & Deductions
+      category: e.id.startsWith('ADJ') ? 'Stripe Fee' : (e.category || 'Maintenance'),
       amount: e.amount,
       type: 'expense',
       source: e.id.startsWith('ADJ') ? 'Stripe' : 'QuickBooks',
     }));
 
-    // Aggregated Statement Payload matching Frontend Type Definitions
+    const lineItems = [
+      ...reservationLineItems,
+      ...cleaningLineItems,
+      ...mgmtFeeLineItem,
+      ...expenseLineItems,
+    ];
+
     const statement = {
-      propertyId,
-      propertyName: propertyId === '2' ? 'Sunset Beach Villa' : 'Modern Alpine Loft',
-      ownerName: propertyId === '2' ? 'Sarah Jenkins' : 'Michael Vance',
-      monthYear: 'October 2026',
+      propertyId: property.id,
+      propertyName: property.propertyName,
+      ownerName: property.ownerName,
+      avatarInitials: getPropertyInitials(property.propertyName),
+      monthYear,
+      year: parseInt(year, 10),
+      month: parseInt(month, 10),
       status: 'Draft',
       baseRentalIncome,
       cleaningFees,
@@ -94,16 +154,24 @@ export async function GET(
       avgDailyRate,
       reservations,
       expenses,
-      lineItems: [
-        ...reservationLineItems,
-        ...cleaningLineItems,
-        ...expenseLineItems,
-      ],
+      qboExpenses,
+      stripeCharges,
+      lineItems,
+      quickbooksSync: {
+        syncStatus: 'Synced',
+        journalEntryId: `JE-${year}-${property.id}`,
+        lastSyncedAt: `${year}-${month}-03 11:45:00`,
+      },
+      stripePayout: {
+        transferId: `tr_prop_${property.id}`,
+        payoutStatus: 'Processing',
+        destinationAccount: `ba_acc_${property.id}`,
+      },
     };
 
     return NextResponse.json({ success: true, statement });
   } catch (error) {
-    console.error('Aggregator Error:', error);
+    console.error('Statement Aggregator Error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to aggregate statement data' },
       { status: 500 }

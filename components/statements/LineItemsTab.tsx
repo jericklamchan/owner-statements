@@ -44,7 +44,7 @@ export default function LineItemsTab({ lineItems }: LineItemsTabProps) {
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-gray-200 bg-gray-50/75 font-bold text-gray-900 text-xs">
-              <td colSpan={2} className="px-5 py-3 text-right">Total</td>
+              <td colSpan={2} className="px-5 py-3 text-right">Total Income</td>
               <td className="px-5 py-3 text-right text-emerald-700">${rentalTotal.toFixed(2)}</td>
             </tr>
           </tfoot>
@@ -66,29 +66,44 @@ export default function LineItemsTab({ lineItems }: LineItemsTabProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {feeItems.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
-                <td className="px-5 py-3 font-medium text-gray-900 truncate">
-                  {item.description}
-                  <div className="text-[11px] text-gray-400 font-normal mt-0.5">Source: {item.source}</div>
-                </td>
-                <td className="px-5 py-3">
-                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase bg-rose-50 text-rose-700">
-                    {item.category}
-                  </span>
-                </td>
-                <td className="px-5 py-3 text-right font-medium text-red-600">
-                  {item.amount < 0 ? `-$${Math.abs(item.amount).toFixed(2)}` : `$${item.amount.toFixed(2)}`}
-                </td>
-              </tr>
-            ))}
+            {feeItems.map((item) => {
+              const isStripe = item.source === 'Stripe';
+              const isMgmt = item.category === 'Management Fee';
+
+              return (
+                <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
+                  <td className="px-5 py-3 font-medium text-gray-900 truncate">
+                    {item.description}
+                    <div className="text-[11px] text-gray-400 font-normal mt-0.5">
+                      {item.date ? `Date: ${item.date} · ` : ''}Source: {item.source}
+                    </div>
+                  </td>
+                  <td className="px-5 py-3">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                        isStripe
+                          ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                          : isMgmt
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'bg-rose-50 text-rose-700'
+                      }`}
+                    >
+                      {item.category}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-right font-medium text-red-600">
+                    -${Math.abs(item.amount).toFixed(2)}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
           {feeItems.length > 0 && (
             <tfoot>
               <tr className="border-t-2 border-gray-200 bg-gray-50/75 font-bold text-gray-900 text-xs">
-                <td colSpan={2} className="px-5 py-3 text-right">Total</td>
+                <td colSpan={2} className="px-5 py-3 text-right">Total Deductions</td>
                 <td className="px-5 py-3 text-right text-red-600">
-                  {feeTotal < 0 ? `-$${Math.abs(feeTotal).toFixed(2)}` : `$${feeTotal.toFixed(2)}`}
+                  -${Math.abs(feeTotal).toFixed(2)}
                 </td>
               </tr>
             </tfoot>

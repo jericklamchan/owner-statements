@@ -1,8 +1,19 @@
 import { NextResponse } from 'next/server';
 
-export async function GET() {
-  // Simulate fetching bookings from Hostaway API
-  const mockHostawayReservations = [
+const mockReservationsMap: Record<string, any[]> = {
+  '1': [
+    {
+      id: 'RES-MC-001',
+      channel: 'Airbnb',
+      from: '2026-10-02',
+      to: '2026-10-07',
+      nights: 5,
+      status: 'Confirmed',
+      totalPrice: 2100.00,
+      cleaningFee: 200.00,
+    },
+  ],
+  '2': [
     {
       id: 'RES-84920',
       channel: 'Airbnb',
@@ -23,7 +34,16 @@ export async function GET() {
       totalPrice: 1750.00,
       cleaningFee: 175.00,
     },
-  ];
+  ],
+};
 
-  return NextResponse.json({ success: true, data: mockHostawayReservations });
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const propertyId = searchParams.get('propertyId');
+
+  if (!propertyId || !mockReservationsMap[propertyId]) {
+    return NextResponse.json({ success: true, data: [] });
+  }
+
+  return NextResponse.json({ success: true, data: mockReservationsMap[propertyId] });
 }
