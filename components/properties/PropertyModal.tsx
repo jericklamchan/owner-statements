@@ -17,6 +17,8 @@ export default function PropertyModal({ isOpen, onClose, onSuccess, propertyToEd
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [country, setCountry] = useState('');
+  const [hostawayId, setHostawayId] = useState('');
+  const [qboClassName, setQboClassName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -26,33 +28,46 @@ export default function PropertyModal({ isOpen, onClose, onSuccess, propertyToEd
       setAddress(propertyToEdit.address || '');
       setCity(propertyToEdit.city || '');
       setCountry(propertyToEdit.country || '');
+      setHostawayId(propertyToEdit.hostaway_id || '');
+      setQboClassName(propertyToEdit.qbo_class_name || '');
     } else {
       setPropertyName('');
       setOwnerName('');
       setAddress('');
       setCity('');
       setCountry('');
+      setHostawayId('');
+      setQboClassName('');
     }
   }, [propertyToEdit, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!propertyName || !ownerName) return;
+    if (!propertyName || !ownerName || !hostawayId || !qboClassName) return;
 
     setIsSubmitting(true);
     try {
       const url = propertyToEdit ? `/api/properties/${propertyToEdit.id}` : '/api/properties';
       const method = propertyToEdit ? 'PUT' : 'POST';
 
+      const payload = {
+        propertyName,
+        ownerName,
+        address,
+        city,
+        country,
+        hostaway_id: hostawayId,
+        qbo_class_name: qboClassName,
+      };
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ propertyName, ownerName, address, city, country }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       
       if (data.success) {
-        // Automatically generate 2-character initials (e.g. "Sunset Beach" -> "SB")
         const initials = propertyName
           .trim()
           .split(/\s+/)
@@ -68,8 +83,10 @@ export default function PropertyModal({ isOpen, onClose, onSuccess, propertyToEd
           address,
           city,
           country,
+          hostaway_id: hostawayId,
+          qbo_class_name: qboClassName,
           avatarInitials: initials,
-          status: propertyToEdit?.status || 'created',
+          status: propertyToEdit?.status || 'not_generated',
         };
 
         onSuccess(savedProperty);
@@ -87,28 +104,30 @@ export default function PropertyModal({ isOpen, onClose, onSuccess, propertyToEd
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title={propertyToEdit ? 'Edit Property' : 'Add Property'}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">Property Name</label>
-          <input 
-            type="text" 
-            required
-            placeholder="e.g. Sunset Beach Villa"
-            value={propertyName}
-            onChange={(e) => setPropertyName(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-900 focus:outline-none focus:border-blue-500"
-          />
-        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">Property Name</label>
+            <input 
+              type="text" 
+              required
+              placeholder="e.g. Sunset Beach Villa"
+              value={propertyName}
+              onChange={(e) => setPropertyName(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-900 focus:outline-none focus:border-blue-500"
+            />
+          </div>
 
-        <div>
-          <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">Owner Name</label>
-          <input 
-            type="text" 
-            required
-            placeholder="e.g. John Doe"
-            value={ownerName}
-            onChange={(e) => setOwnerName(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-900 focus:outline-none focus:border-blue-500"
-          />
+          <div>
+            <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">Owner Name</label>
+            <input 
+              type="text" 
+              required
+              placeholder="e.g. John Doe"
+              value={ownerName}
+              onChange={(e) => setOwnerName(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-900 focus:outline-none focus:border-blue-500"
+            />
+          </div>
         </div>
 
         <div>
@@ -141,6 +160,32 @@ export default function PropertyModal({ isOpen, onClose, onSuccess, propertyToEd
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-900 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Integration Mapping Fields */}
+        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
+          <div>
+            <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">Hostaway ID</label>
+            <input 
+              type="text" 
+              required
+              placeholder="e.g. HW-10842"
+              value={hostawayId}
+              onChange={(e) => setHostawayId(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs font-mono text-gray-900 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">QBO Class Name</label>
+            <input 
+              type="text" 
+              required
+              placeholder="e.g. SMC-BAG"
+              value={qboClassName}
+              onChange={(e) => setQboClassName(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs font-mono text-gray-900 focus:outline-none focus:border-blue-500"
             />
           </div>
         </div>

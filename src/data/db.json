@@ -8,7 +8,9 @@
       "city": "Baguio City",
       "country": "Philippines",
       "avatarInitials": "SMC",
-      "status": "created"
+      "hostaway_id": "HW-10842",
+      "qbo_class_name": "SMC-BAG",
+      "status": "not_generated"
     },
     {
       "id": "2",
@@ -18,7 +20,9 @@
       "city": "Malibu",
       "country": "United States",
       "avatarInitials": "SBV",
-      "status": "created"
+      "hostaway_id": "HW-10845",
+      "qbo_class_name": "SBV-MLB",
+      "status": "not_generated"
     }
   ],
   "users": [

@@ -3,8 +3,6 @@ import path from 'path';
 
 const filePath = path.join(process.cwd(), 'src/data/db.json');
 
-// ... your interfaces (PropertyRecord, UserRecord, etc.) remain the same ...
-
 export function readDb() {
   if (!fs.existsSync(filePath)) return { properties: [], users: [] };
   return JSON.parse(fs.readFileSync(filePath, 'utf-8'));

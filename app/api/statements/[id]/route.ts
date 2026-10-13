@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { getCollection } from '../../store';
 import { getPropertyInitials } from '@/utils/formatters';
 import { 
-  getHostawayReservations, 
-  getQuickBooksExpenses, 
-  getStripeAdjustments 
+  getHostawayReservationsByHostawayId, 
+  getQuickBooksExpensesByClass, 
+  getStripeAdjustmentsByHostawayId 
 } from '@/utils/mockService';
 import { MONTHS } from '@/utils/constants';
 
@@ -28,16 +28,16 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Property not found' }, { status: 404 });
     }
 
-    // 2. Fetch data directly via service functions
-    const reservations = getHostawayReservations(propertyId);
+    // 2. Fetch data via service functions using external integration identifiers
+    const reservations = getHostawayReservationsByHostawayId(property.hostaway_id);
 
     // Check if any reservation is from VRBO
     const hasVrboBooking = reservations.some(
       (r: any) => r.channel && r.channel.toLowerCase() === 'vrbo'
     );
 
-    const qboExpenses = getQuickBooksExpenses(propertyId);
-    const stripeCharges = hasVrboBooking ? getStripeAdjustments(propertyId) : [];
+    const qboExpenses = getQuickBooksExpensesByClass(property.qbo_class_name);
+    const stripeCharges = hasVrboBooking ? getStripeAdjustmentsByHostawayId(property.hostaway_id) : [];
     const expenses = [...qboExpenses, ...stripeCharges];
 
     // 3. Core Financial Calculations

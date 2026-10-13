@@ -73,18 +73,24 @@ export default function PropertiesPage() {
     });
   };
 
-  const filteredProperties = properties.filter(
-    p => p.propertyName.toLowerCase().includes(search.toLowerCase()) || 
-         p.ownerName.toLowerCase().includes(search.toLowerCase()) ||
-         p.city.toLowerCase().includes(search.toLowerCase())
-  );
+  // Safe search filter handling optional fields with optional chaining / fallbacks
+  const filteredProperties = properties.filter(p => {
+    const query = search.toLowerCase();
+    const nameMatch = p.propertyName.toLowerCase().includes(query);
+    const ownerMatch = p.ownerName.toLowerCase().includes(query);
+    const cityMatch = p.city?.toLowerCase().includes(query) ?? false;
+    const hostawayMatch = p.hostaway_id?.toLowerCase().includes(query) ?? false;
+    const qboMatch = p.qbo_class_name?.toLowerCase().includes(query) ?? false;
+
+    return nameMatch || ownerMatch || cityMatch || hostawayMatch || qboMatch;
+  });
 
   return (
     <>
       <ListPageLayout
         title="Properties"
         subtitle={`${properties.length} total property`}
-        searchPlaceholder="Search properties, owners, or cities…"
+        searchPlaceholder="Search properties, owners, cities, or IDs…"
         searchValue={search}
         onSearchChange={(e) => setSearch(e.target.value)}
         actionLabel="+ Add property"
@@ -99,16 +105,17 @@ export default function PropertiesPage() {
           <table className="w-full text-xs table-fixed">
             <thead>
               <tr className="bg-gray-50/75 border-b border-gray-200 uppercase text-gray-400 font-semibold tracking-wider">
-                <th className="w-2/5 px-5 py-3 text-left">Property</th>
-                <th className="w-1/4 px-5 py-3 text-left">Owner</th>
-                <th className="w-1/4 px-5 py-3 text-left">Location</th>
-                <th className="w-[12%] px-5 py-3 text-right"></th>
+                <th className="w-3/10 px-4 py-3 text-left">Property</th>
+                <th className="w-1/5 px-4 py-3 text-left">Owner</th>
+                <th className="w-1/5 px-4 py-3 text-left">Location</th>
+                <th className="w-[18%] px-4 py-3 text-left">Integration IDs</th>
+                <th className="w-[12%] px-4 py-3 text-right"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredProperties.map((prop) => (
                 <tr key={prop.id} className="hover:bg-gray-50/80 transition-colors">
-                  <td className="px-5 py-3 truncate">
+                  <td className="px-4 py-3 truncate">
                     <div className="flex items-center gap-3">
                       <div className="h-7 w-7 rounded-lg flex items-center justify-center text-[11px] font-bold flex-shrink-0 bg-teal-100 text-teal-700">
                         {prop.avatarInitials || 'P'}
@@ -116,11 +123,19 @@ export default function PropertiesPage() {
                       <span className="font-medium text-gray-900 truncate">{prop.propertyName}</span>
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-gray-600 truncate">{prop.ownerName}</td>
-                  <td className="px-5 py-3 text-gray-500 truncate">
+                  <td className="px-4 py-3 text-gray-600 truncate">{prop.ownerName}</td>
+                  <td className="px-4 py-3 text-gray-500 truncate">
                     {prop.city && prop.country ? `${prop.city}, ${prop.country}` : prop.city || prop.country || '—'}
                   </td>
-                  <td className="px-5 py-3 text-right">
+                  <td className="px-4 py-3 truncate font-mono text-[11px]">
+                    <div className="text-slate-700 truncate" title={`Hostaway ID: ${prop.hostaway_id}`}>
+                      {prop.hostaway_id || '—'}
+                    </div>
+                    <div className="text-[10px] text-emerald-600 truncate" title={`QBO Class: ${prop.qbo_class_name}`}>
+                      {prop.qbo_class_name || '—'}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-right">
                     <div className="flex gap-1.5 justify-end">
                       <button 
                         onClick={() => handleOpenEdit(prop)}
