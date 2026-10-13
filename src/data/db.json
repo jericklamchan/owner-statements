@@ -2,27 +2,23 @@
   "properties": [
     {
       "id": "1",
-      "propertyName": "Sample Mountain Cabin",
+      "propertyName": "Mountain Cabin",
       "ownerName": "John Doe",
-      "avatarInitials": "SM",
-      "status": "not_generated",
-      "date": null,
-      "ownerPayout": null,
-      "commission": null,
-      "year": 2026,
-      "month": 10
+      "address": "123 Pinecrest Road",
+      "city": "Baguio City",
+      "country": "Philippines",
+      "avatarInitials": "SMC",
+      "status": "created"
     },
     {
       "id": "2",
-      "propertyName": "Sunset Beach Villa",
+      "propertyName": "Sunset Villa",
       "ownerName": "Sarah Jenkins",
-      "avatarInitials": "SB",
-      "status": "published",
-      "date": "Oct 12, 2026",
-      "ownerPayout": 4120.00,
-      "commission": 824.00,
-      "year": 2026,
-      "month": 10
+      "address": "45 Ocean Drive",
+      "city": "Malibu",
+      "country": "United States",
+      "avatarInitials": "SBV",
+      "status": "created"
     }
   ],
   "users": [
@@ -31,15 +27,6 @@
       "name": "Jerick Chan",
       "email": "jerick@example.com",
       "role": "Admin",
-      "propertiesManaged": 12,
-      "status": "Active"
-    },
-    {
-      "id": "u-2",
-      "name": "Sarah Jenkins",
-      "email": "sarah.j@example.com",
-      "role": "Owner",
-      "propertiesManaged": 2,
       "status": "Active"
     }
   ]
