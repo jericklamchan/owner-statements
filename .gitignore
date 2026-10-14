@@ -41,4 +41,4 @@ yarn-error.log*
 next-env.d.ts
 
 # cache
-./src/data/*.json
+/src/data/*.json
