@@ -20,15 +20,6 @@ export default function StatementHeader({
 
   return (
     <div>
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors mb-4 cursor-pointer"
-      >
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-        </svg>
-        Back to Dashboard
-      </Link>
 
       <div>
         <div className="flex items-center gap-3">

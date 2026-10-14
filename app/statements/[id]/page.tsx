@@ -118,22 +118,31 @@ function StatementDetailContent({ params }: PageProps) {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 print:p-0 print:max-w-full print:w-full">
         {/* Hide top action bar on print */}
-        <div className="print:hidden flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-gray-200/80">
-          <StatementHeader
-            propertyName={statement.propertyName}
-            ownerName={statement.ownerName}
-            monthYear={statement.monthYear}
-            status={statement.status}
-          />
+       <div className="print:hidden mb-6 pb-6 border-b border-gray-200/80">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 mb-2 transition-colors"
+          >
+            &larr; Return to Dashboard
+          </Link>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <StatementHeader
+              propertyName={statement.propertyName}
+              ownerName={statement.ownerName}
+              monthYear={statement.monthYear}
+              status={statement.status}
+            />
 
-          <StatementActions
-            status={statement.status}
-            isUpdating={isUpdating}
-            onRefresh={fetchStatement}
-            onGenerate={() => patchStatement({ status: 'draft' })}
-            onPublish={() => patchStatement({ status: 'published' })}
-            onDownloadPdf={handleDownloadPdf}
-          />
+            <StatementActions
+              status={statement.status}
+              isUpdating={isUpdating}
+              onRefresh={fetchStatement}
+              onGenerate={() => patchStatement({ status: 'draft' })}
+              onPublish={() => patchStatement({ status: 'published' })}
+              onDownloadPdf={handleDownloadPdf}
+            />
+          </div>
         </div>
 
         {/* Invoice Header */}

@@ -1,10 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
+import { use, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import NavBar from '@/components/NavBar';
+import PageHeader from '@/components/ui/PageHeader';
+import PageActions from '@/components/ui/PageActions';
 import { PolicySection, PolicySelect, PolicyCheckbox } from '@/components/properties/PolicyComponents';
+
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
 
 const ABSORPTION_OPTIONS = [
   { value: 'owner_pays', label: 'Owner Pays' },
@@ -12,7 +17,8 @@ const ABSORPTION_OPTIONS = [
   { value: 'split', label: 'Split 50/50' },
 ];
 
-export default function EditPropertyPolicyPage({ params }: { params: { id: string } }) {
+function PropertyPolicyContent({ params }: PageProps) {
+  const resolvedParams = use(params);
   const router = useRouter();
 
   const [commissionRate, setCommissionRate] = useState('20');
@@ -56,31 +62,23 @@ export default function EditPropertyPolicyPage({ params }: { params: { id: strin
     router.push('/');
   };
 
+  const formActions = [
+    { label: 'Cancel', href: '/' },
+    { label: 'Save changes', type: 'submit' as const, variant: 'primary' as const },
+  ];
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-gray-900 pb-16">
       <NavBar />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <form onSubmit={handleSave} className="space-y-6">
-          {/* Top Bar Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-gray-200/80">
-            <div>
-              <Link href="/" className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 mb-1.5 transition-colors">
-                &larr; Return to Dashboard
-              </Link>
-              <h1 className="text-xl font-bold text-gray-900 tracking-tight">Property Policy & Calculations</h1>
-              <p className="text-xs text-gray-500 mt-0.5">Configure calculation rules and aggregation parameters for this listing.</p>
-            </div>
-            
-            <div className="flex items-center gap-2.5 shrink-0">
-              <Link href="/" className="text-xs font-medium px-4 py-2 rounded-lg border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-all shadow-2xs">
-                Cancel
-              </Link>
-              <button type="submit" className="text-xs font-semibold px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-all shadow-2xs cursor-pointer">
-                Save changes
-              </button>
-            </div>
-          </div>
+          {/* Shared Unified Page Header */}
+          <PageHeader
+            title="Property Policy & Calculations"
+            subtitle={`Configure calculation rules and parameters for property ID: ${resolvedParams.id}`}
+            actions={<PageActions actions={formActions} />}
+          />
 
           {/* 1. Commission */}
           <PolicySection
@@ -88,7 +86,11 @@ export default function EditPropertyPolicyPage({ params }: { params: { id: strin
             description="How your management fee is calculated for each reservation."
             accentColor="bg-blue-600"
             iconBg="bg-blue-50 text-blue-600 border-blue-100/60"
-            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" /></svg>}
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+              </svg>
+            }
           >
             <div className="max-w-xs">
               <label htmlFor="commission-rate" className="block font-semibold text-gray-700 mb-1">Commission Rate</label>
@@ -119,7 +121,11 @@ export default function EditPropertyPolicyPage({ params }: { params: { id: strin
             description="How cleaning fees collected from guests are handled on statements."
             accentColor="bg-violet-600"
             iconBg="bg-violet-50 text-violet-600 border-violet-100/60"
-            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>}
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+              </svg>
+            }
           >
             <div className="max-w-md">
               <PolicySelect
@@ -142,7 +148,11 @@ export default function EditPropertyPolicyPage({ params }: { params: { id: strin
             description="Decide who absorbs each type of fee for final owner payouts."
             accentColor="bg-amber-500"
             iconBg="bg-amber-50 text-amber-600 border-amber-100/60"
-            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971z" /></svg>}
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971z" />
+              </svg>
+            }
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <PolicySelect label="OTA / Platform Fees" value={otaFees} onChange={setOtaFees} options={ABSORPTION_OPTIONS} helperText="Airbnb, VRBO, Booking.com fees." />
@@ -157,7 +167,11 @@ export default function EditPropertyPolicyPage({ params }: { params: { id: strin
             description="How imported expenses and bills appear on owner statements."
             accentColor="bg-rose-500"
             iconBg="bg-rose-50 text-rose-600 border-rose-100/60"
-            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185z" /></svg>}
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185z" />
+              </svg>
+            }
           >
             <div className="max-w-md">
               <PolicySelect
@@ -250,7 +264,11 @@ export default function EditPropertyPolicyPage({ params }: { params: { id: strin
             description="Controls reservation date mapping and optional stats."
             accentColor="bg-gray-400"
             iconBg="bg-gray-100 text-gray-600 border-gray-200/60"
-            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+            }
           >
             <div className="max-w-md">
               <PolicySelect
@@ -286,17 +304,26 @@ export default function EditPropertyPolicyPage({ params }: { params: { id: strin
             </div>
           </PolicySection>
 
-          {/* Bottom Actions */}
-          <div className="flex justify-end gap-2.5 pt-2">
-            <Link href="/" className="text-xs font-medium px-4 py-2 rounded-lg border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-all shadow-2xs">
-              Cancel
-            </Link>
-            <button type="submit" className="text-xs font-semibold px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-all shadow-2xs cursor-pointer">
-              Save changes
-            </button>
+          {/* Bottom Form Actions */}
+          <div className="flex justify-end pt-2">
+            <PageActions actions={formActions} />
           </div>
         </form>
       </main>
     </div>
+  );
+}
+
+export default function EditPropertyPolicyPage({ params }: PageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#f8fafc] text-gray-900 pb-16 flex items-center justify-center">
+          <p className="text-xs text-gray-500 animate-pulse">Loading property policy...</p>
+        </div>
+      }
+    >
+      <PropertyPolicyContent params={params} />
+    </Suspense>
   );
 }

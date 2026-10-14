@@ -26,7 +26,8 @@ export default function PageActions({ actions, extraContent }: PageActionsProps)
         
         let variantStyles = "border border-gray-200 text-gray-700 bg-white hover:bg-gray-50";
         if (action.variant === 'primary') {
-          variantStyles = "font-semibold bg-gray-900 text-white hover:bg-gray-800 border border-transparent";
+          // Updated to consistent blue primary styling
+          variantStyles = "font-semibold bg-blue-600 text-white hover:bg-blue-700 border border-transparent shadow-xs";
         } else if (action.variant === 'secondary') {
           variantStyles = "font-semibold border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-100/60";
         }
