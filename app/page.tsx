@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import NavBar from '@/components/NavBar';
+import PageHeader from '@/components/ui/PageHeader';
 import DashboardFilters from '@/components/DashboardFilters';
 import MetricsCards from '@/components/MetricsCards';
 import PropertyQueue from '@/components/PropertyQueue';
@@ -75,17 +76,13 @@ export default function DashboardPage() {
       <NavBar />
 
       <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-6 space-y-5">
-        {/* Page Header Integration */}
-        <div className="flex items-baseline justify-between border-b border-gray-200/60 pb-3">
-          <div>
-            <h1 className="text-lg font-bold tracking-tight text-gray-900">
-              Statement Dashboard
-            </h1>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Manage and generate monthly owner statements across properties.
-            </p>
-          </div>
-        </div>
+        {/* Unified Page Header Integration */}
+        <PageHeader
+          backHref="" 
+          backLabel=""
+          title="Statement Dashboard"
+          subtitle="Manage and generate monthly owner statements across properties."
+        />
 
         <DashboardFilters
           year={selectedYear}
