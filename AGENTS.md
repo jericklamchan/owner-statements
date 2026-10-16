@@ -14,7 +14,7 @@
 
 ### 2. Strict Testing Directive (`node --test`)
 - Before marking ANY task complete or asking for human code review:
-  1. Execute `node --test tests/statement.test.js` (or `npm test`).
+  1. Execute `node --test tests/statement.test.mjs` (or `npm test`).
   2. NEVER report a task as finished if tests are failing.
   3. If a test fails after changes:
      - Read the terminal error stack trace.
