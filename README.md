@@ -1,97 +1,121 @@
-# Property Owner Statement Generator
+# 🏢 Short-Term Rental Owner Statement & Financial Aggregator
 
-A modern full-stack web application designed for short-term rental management operations. The platform aggregates financial data across **Hostaway**, **QuickBooks**, and **Stripe** to calculate revenue splits, management fees, expenses, and net owner payouts, automatically producing polished, audit-ready monthly owner statements.
+A production-grade full-stack web application designed to automate multi-city short-term rental financial reconciliation, owner statement generation, and property operational tracking. 
+
+Built to eliminate manual spreadsheet error in property management by synthesizing data streams from booking channels, accounting software, and payment gateways.
+
+---
+
+## 🏗️ System Architecture & Design Principles
+
+The application is structured around a strict **separation of concerns**, separating HTTP protocol routing from core domain business logic.
+
+```text
+Incoming Request (Next.js App Router)
+       │
+       ▼
+Thin Route Controllers (`app/api/...`)
+       │
+       ▼
+Domain Service Layer (`services/statementService.ts`)
+       ├── Hostaway API Integration (Reservations, Cleaning Fees)
+       ├── QuickBooks API Integration (Class-based Expenses)
+       ├── Stripe API Integration (Adjustments & Payouts)
+       └── Financial Calculation Engine (Net Payouts, Occupancy, Management Fees)
+       │
+       ▼
+Persistence Layer (`utils/store.ts` ⇄ `src/data/db.json`)
+```
+
+* **Thin Controllers:** API route handlers (`route.ts`) exclusively manage HTTP requests, query parameters, payload parsing, and status codes.
+* **Service Layer Abstraction:** Heavy financial calculations, multi-source data aggregation, and snapshot management reside in isolated domain service modules, keeping code modular, maintainable, and directly testable.
+* **Pragmatic Testing Strategy:** Unit and integration tests covering data persistence, entity routes, and the complex financial calculation engine without brittle UI mocks.
 
 ---
 
 ## 🚀 Tech Stack
 
-- **Framework:** [Next.js](https://nextjs.org/) (App Router, React 19, TypeScript)
-- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-- **State & Data Fetching:** React Hooks (`use`, `useState`, `useEffect`, `useMemo`)
-- **Type System:** Strict TypeScript with centralized domain models
-- **Deployment & Prerendering:** Next.js Static Export / Dynamic App Router Architecture
+* **Framework:** Next.js (App Router) / React / TypeScript
+* **Styling & UI:** Tailwind CSS
+* **Testing:** Vitest (configured with custom environment isolation to prevent parallel DB race conditions)
+* **Data & Persistence:** Custom JSON-backed atomic store with transactional safety hooks
+* **External Integrations:** Hostaway (Property Management System), QuickBooks Online (General Ledger / Classes), Stripe (Payouts & Adjustments)
 
 ---
 
-## 📁 Repository & Architecture Overview
+## 📊 Core Features
+
+1. **Automated Statement Aggregation:** Pulls reservation histories, cleans up fee splits, calculates tiered management fees (e.g., 18% base rental commission), and merges class-filtered QuickBooks expenses and Stripe adjustments.
+2. **Snapshot Caching & Version Control:** Once statements are computed, operators can lock, edit adjustments, and save snapshots (`published` vs `not_generated`) for owner portal viewing.
+3. **Comprehensive Metrics Engine:** Automatically computes occupancy rates, average daily rates (ADR), gross revenues, and net owner payouts down to the cent.
+4. **Robust Test Suite:** Fully automated backend tests safeguarding database integrity, property CRUD operations, and financial calculation accuracy.
+
+---
+
+## 🛠️ Getting Started & Local Development
+
+### Prerequisites
+* Node.js (v18+ recommended)
+* npm
+
+### Installation & Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/your-repo-name.git
+   cd your-repo-name
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+
+---
+
+## 🧪 Running Tests
+
+The test suite covers database storage utilities, property route handlers, and the core statement financial calculation engine using **Vitest**.
+
+To run tests in watch mode:
+```bash
+npm run test
+```
+
+To run tests once (CI mode):
+```bash
+npm run test:run
+```
+
+---
+
+## 📁 Project Structure
 
 ```text
 ├── app/
 │   ├── api/
-│   │   ├── properties/       # Mock aggregator endpoints
-│   │   └── statements/[id]/   # Statement detail API endpoints
-│   ├── statements/
-│   │   └── [id]/
-│   │       └── page.tsx      # Dynamic statement detail route (Wrapped in <Suspense>)
-│   ├── layout.tsx            # Global layout & navigation wrapper
-│   └── page.tsx              # Main Statement Dashboard view
-├── components/
-│   ├── ui/                   # Reusable base UI primitives (Card, Badges)
-│   ├── statements/           # Tab views (SummaryTab, LineItemsTab, AuditTab)
-│   ├── DashboardFilters.tsx  # Year, Month, & Status filter bar
-│   ├── MetricsCards.tsx      # Compact high-level KPI dashboard metrics
-│   ├── NavBar.tsx            # Top application header & navigation
-│   └── PropertyQueue.tsx     # Filterable property table & status tracker
-├── types/
-│   ├── dashboard.ts          # Local UI prop definitions
-│   └── statement.ts          # Centralized domain models (PropertyStatement, LineItem, etc.)
-└── src/
-    └── data/
-        └── db.json           # Mock data storage
+│   │   ├── properties/          # Property CRUD route handlers
+│   │   └── statements/[id]/     # Statement aggregation & patch route handlers
+│   └── page.tsx                 # Main dashboard UI
+├── services/
+│   └── statementService.ts      # Core financial aggregation & snapshot domain logic
+├── utils/
+│   ├── store.ts                 # JSON database read/write persistence layer
+│   ├── mockService.ts           # External API mock adapters (Hostaway, QBO, Stripe)
+│   └── formatters.ts            # Currency, date, and string formatting helpers
+├── src/
+│   └── data/
+│       └── db.json              # Local operational persistence store
+└── vitest.config.mts            # Vitest configuration (file parallelism & path aliases)
 ```
 
 ---
 
-## 🛠️ TypeScript & Code Conventions
-
-1. **Centralized Domain Models:** Core data structures and API contracts (`UserRecord`, `PropertyRecord`, `PropertyStatement`) live centrally in `types/` for reuse across page routes and API handlers.
-2. **Local Component Props:** Props specific to a single component (e.g., `QueueProps`, `MetricsProps`) remain locally scoped inside their respective `.tsx` files.
-3. **Status Configuration Map:** Status rendering follows a strict workflow lifecycle (`not_generated` $\rightarrow$ `draft` $\rightarrow$ `published`). Status badges utilize a centralized configuration object (`STATUS_CONFIG`) in `PropertyQueue.tsx` rather than verbose switch statements.
-
----
-
-## ⚡ Dynamic Routes & Next.js Build Requirements
-
-Dynamic App Router routes that unwrap asynchronous parameters (e.g., `params: Promise<{ id: string }>`) using React's `use()` hook **must** wrap the component in a `<Suspense>` boundary. 
-
-```tsx
-// app/statements/[id]/page.tsx
-export default function StatementDetailPage({ params }: PageProps) {
-  return (
-    <Suspense fallback={<LoadingSkeleton />}>
-      <StatementDetailContent params={params} />
-    </Suspense>
-  );
-}
-```
-
-*This guarantees that Next.js static analysis during `npm run build` gracefully handles dynamic route parameters during static prerendering.*
-
----
-
-## 🏃 Getting Started
-
-### 1. Install Dependencies
-```bash
-npm install
-```
-
-### 2. Run Development Server
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### 3. Build & Type Check
-```bash
-npm run build
-```
-
----
-
-## 📝 Statement Workflow Lifecycle
-
-1. **Not Generated:** Default state for properties awaiting statement generation for the selected period.
-2. **Draft:** Initial statement generation complete; undergoing internal calculation & audit review.
-3. **Published:** Statement finalized and made visible to property owners.
+## 📄 License
+Licensed under the MIT License.
