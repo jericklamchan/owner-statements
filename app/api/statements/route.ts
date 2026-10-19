@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCollection, readDb } from '../../../utils/store';
+import { getCollection, readDb } from '@/utils/store';
 import { 
   getHostawayReservationsByHostawayId, 
   getQuickBooksExpensesByClass, 
@@ -61,9 +61,9 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json({ success: true, statements: statementsWithStatus });
+    return NextResponse.json({ success: true, statements: statementsWithStatus }, { status: 200 });
   } catch (error) {
-    console.error('Statements List API Error:', error);
+    console.error('[API Error - GET /api/statements]:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch statements list' },
       { status: 500 }

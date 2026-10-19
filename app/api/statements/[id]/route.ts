@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCollection, readDb, writeDb } from '../../../../utils/store';
+import { getCollection, readDb, writeDb } from '@/utils/store';
 import { getPropertyInitials } from '@/utils/formatters';
 import { 
   getHostawayReservationsByHostawayId, 
@@ -8,13 +8,16 @@ import {
 } from '@/utils/mockService';
 import { MONTHS } from '@/utils/constants';
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+type RouteParams = { params: Promise<{ id: string }> };
+
+export async function GET(request: Request, { params }: RouteParams) {
   try {
     const resolvedParams = await params;
-    const propertyId = resolvedParams.id;
+    const propertyId = resolvedParams?.id;
+
+    if (!propertyId) {
+      return NextResponse.json({ success: false, error: 'Property ID is required.' }, { status: 400 });
+    }
 
     const { searchParams } = new URL(request.url);
     const year = searchParams.get('year') || '2026';
@@ -178,9 +181,9 @@ export async function GET(
       },
     };
 
-    return NextResponse.json({ success: true, statement });
+    return NextResponse.json({ success: true, statement }, { status: 200 });
   } catch (error) {
-    console.error('Statement Aggregator Error:', error);
+    console.error('[API Error - GET /api/statements/[id]]:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to aggregate statement data' },
       { status: 500 }
@@ -188,14 +191,25 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: Request, { params }: RouteParams) {
   try {
     const resolvedParams = await params;
-    const propertyId = resolvedParams.id;
-    const body = await request.json();
+    const propertyId = resolvedParams?.id;
+
+    if (!propertyId) {
+      return NextResponse.json({ success: false, error: 'Property ID is required.' }, { status: 400 });
+    }
+
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Invalid or missing JSON request body.' },
+        { status: 400 }
+      );
+    }
+
     const { status, adjustments, year = '2026', month = '10' } = body;
     const snapshotKey = `${propertyId}_${year}_${month}`;
 
@@ -347,11 +361,18 @@ export async function PATCH(
     };
 
     db.statements[snapshotKey] = statementSnapshot;
-    writeDb(db);
+    const success = writeDb(db);
 
-    return NextResponse.json({ success: true, statement: statementSnapshot });
+    if (!success) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to write statement snapshot to database.' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true, statement: statementSnapshot }, { status: 200 });
   } catch (error) {
-    console.error('Statement Snapshot Update Error:', error);
+    console.error('[API Error - PATCH /api/statements/[id]]:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to save statement snapshot' },
       { status: 500 }
