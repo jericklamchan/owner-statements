@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCollection, readDb, writeDb } from '../../store';
+import { getCollection, readDb, writeDb } from '../../../../utils/store';
 import { getPropertyInitials } from '@/utils/formatters';
 import { 
   getHostawayReservationsByHostawayId, 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { updateInCollection, deleteFromCollection } from '../../store';
+import { updateInCollection, deleteFromCollection } from '../../../../utils/store';
 
 type RouteParams = { params: Promise<{ id: string }> };
 

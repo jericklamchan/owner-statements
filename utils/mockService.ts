@@ -32,7 +32,11 @@ const hostawayReservationsMap: Record<string, HostawayReservation[]> = {
   ],
   'HW-10845': [
     { id: 'RES-84925', channel: 'Vrbo', totalPrice: 1800.00, cleaningFee: 200.00, nights: 6, from: '2026-10-10', to: '2026-10-16', status: 'Confirmed' },
-    { id: 'RES-84926', channel: 'Airbnb', totalPrice: 950.00, cleaningFee: 120.00, nights: 3, from: '2026-10-20', to: '2026-10-23', status: 'Confirmed' }
+  { id: 'RES-84926', channel: 'Airbnb', totalPrice: 950.00, cleaningFee: 120.00, nights: 3, from: '2026-10-20', to: '2026-10-23', status: 'Confirmed' },
+  { id: 'RES-84927', channel: 'Direct', totalPrice: 620.00, cleaningFee: 100.00, nights: 2, from: '2026-10-01', to: '2026-10-03', status: 'Confirmed' },
+  { id: 'RES-84928', channel: 'Airbnb', totalPrice: 1250.00, cleaningFee: 150.00, nights: 4, from: '2026-10-05', to: '2026-10-09', status: 'Confirmed' },
+  { id: 'RES-84929', channel: 'Airbnb', totalPrice: 1100.00, cleaningFee: 120.00, nights: 3, from: '2026-10-16', to: '2026-10-19', status: 'Confirmed' },
+  { id: 'RES-84930', channel: 'Vrbo', totalPrice: 2100.00, cleaningFee: 200.00, nights: 7, from: '2026-10-24', to: '2026-10-31', status: 'Confirmed' }
   ]
 };
 

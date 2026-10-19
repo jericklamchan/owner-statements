@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCollection, addToCollection } from '../store';
+import { getCollection, addToCollection } from '../../../utils/store';
 import { getPropertyInitials } from '@/utils/formatters';
 
 export async function GET(request: Request) {
