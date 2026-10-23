@@ -1,12 +1,12 @@
 'use client';
 
-import { YEARS, MONTHS } from '@/utils/constants';
+import { YEARS, MONTHS, Year, MonthValue } from '@/src/constants/dates';
 
 interface FilterProps {
-  year: number;
-  setYear: (y: number) => void;
-  month: number;
-  setMonth: (m: number) => void;
+  year: Year;
+  setYear: (y: Year) => void;
+  month: MonthValue;
+  setMonth: (m: MonthValue) => void;
   status: string;
   setStatus: (s: string) => void;
 }
@@ -29,7 +29,7 @@ export default function DashboardFilters({
           <select
             aria-label="Filter by Year"
             value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
+            onChange={(e) => setYear(Number(e.target.value) as Year)}
             className="rounded-lg border border-gray-200 bg-gray-50/50 px-2.5 py-1 text-xs font-semibold text-gray-700 hover:border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none transition-all"
           >
             {YEARS.map((y) => (
@@ -48,7 +48,7 @@ export default function DashboardFilters({
           <select
             aria-label="Filter by Month"
             value={month}
-            onChange={(e) => setMonth(Number(e.target.value))}
+            onChange={(e) => setMonth(Number(e.target.value) as MonthValue)}
             className="rounded-lg border border-gray-200 bg-gray-50/50 px-2.5 py-1 text-xs font-semibold text-gray-700 hover:border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none transition-all"
           >
             {MONTHS.map((m) => (
@@ -77,7 +77,6 @@ export default function DashboardFilters({
           </select>
         </div>
       </div>
-
     </div>
   );
 }

@@ -14,3 +14,6 @@ export const MONTHS = [
 ];
 
 export const YEARS = [2026, 2025];
+
+export type Year = typeof YEARS[number];
+export type MonthValue = typeof MONTHS[number]['value'];

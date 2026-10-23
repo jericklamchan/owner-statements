@@ -5,7 +5,7 @@ import {
   getQuickBooksExpensesByClass, 
   getStripeAdjustmentsByHostawayId 
 } from '@/utils/mockService';
-import { MONTHS } from '@/utils/constants';
+import { MONTHS, Year, MonthValue } from '@/src/constants/dates';
 
 export interface StatementAdjustment {
   id: string;
@@ -16,19 +16,19 @@ export interface StatementAdjustment {
 
 export interface StatementOptions {
   propertyId: string;
-  year?: string;
-  month?: string;
+  year?: Year | string;
+  month?: MonthValue | string;
 }
 
 export interface StatementPatchPayload {
   status?: string;
   adjustments?: StatementAdjustment[];
-  year?: string;
-  month?: string;
+  year?: Year | string;
+  month?: MonthValue | string;
 }
 
 /**
- * Core domain service to generate or retrieve an aggregated statement snapshot.
+- Core domain service to generate or retrieve an aggregated statement snapshot.
  */
 export function getOrComputeStatement(options: StatementOptions) {
   const { propertyId, year = '2026', month = '10' } = options;
@@ -91,7 +91,7 @@ export function getOrComputeStatement(options: StatementOptions) {
   const occupancyRate = Number(((occupiedNights / totalNights) * 100).toFixed(1));
   const avgDailyRate = occupiedNights > 0 ? Math.round(baseRentalIncome / occupiedNights) : 0;
 
-  const monthObj = MONTHS.find((m) => m.value === parseInt(month, 10));
+  const monthObj = MONTHS.find((m) => m.value === parseInt(String(month), 10));
   const monthName = monthObj ? monthObj.label : 'October';
   const monthYear = `${monthName} ${year}`;
 
@@ -160,8 +160,8 @@ export function getOrComputeStatement(options: StatementOptions) {
     ownerName: property.ownerName,
     avatarInitials: getPropertyInitials(property.propertyName),
     monthYear,
-    year: parseInt(year, 10),
-    month: parseInt(month, 10),
+    year: parseInt(String(year), 10),
+    month: parseInt(String(month), 10),
     status,
     baseRentalIncome,
     cleaningFees,
@@ -194,7 +194,7 @@ export function getOrComputeStatement(options: StatementOptions) {
 }
 
 /**
- * Updates and persists a statement snapshot in the database.
+- Updates and persists a statement snapshot in the database.
  */
 export function updateAndSaveStatement(propertyId: string, payload: StatementPatchPayload) {
   const { status, adjustments, year = '2026', month = '10' } = payload;
