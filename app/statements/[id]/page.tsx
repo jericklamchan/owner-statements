@@ -7,7 +7,7 @@ import SummaryTab from '@/components/statements/SummaryTab';
 import LineItemsTab from '@/components/statements/LineItemsTab';
 import AuditTab from '@/components/statements/AuditTab';
 import { PropertyStatement, StatementAdjustment } from '@/types/statement';
-import { STATEMENT_STATUSES, YEARS, MONTHS } from '@/src/constants';
+import { STATEMENT_STATUSES, YEARS, MONTHS, Year } from '@/src/constants';
 import StatementHeader from './StatementHeader';
 import StatementActions from './StatementActions';
 import StatementMetrics from './StatementMetrics';
@@ -41,8 +41,9 @@ export default function StatementDetailPage({ params }: PageProps) {
 
       const searchParams = new URLSearchParams(window.location.search);
       const now = new Date();
+      const currentYearNum = now.getFullYear();
       
-      const currentYear = YEARS.includes(now.getFullYear() as any) ? now.getFullYear() : (YEARS[0] || 2026);
+      const currentYear = YEARS.includes(currentYearNum as Year) ? currentYearNum : (YEARS[0] || 2026);
       const currentMonth = MONTHS.some(m => m.value === (now.getMonth() + 1)) ? (now.getMonth() + 1) : (MONTHS.find(m => m.value === 10)?.value || 10);
 
       const year = searchParams.get('year') || String(currentYear);
@@ -76,7 +77,8 @@ export default function StatementDetailPage({ params }: PageProps) {
       setIsUpdating(true);
       const searchParams = new URLSearchParams(window.location.search);
       const now = new Date();
-      const currentYear = YEARS.includes(now.getFullYear() as any) ? now.getFullYear() : (YEARS[0] || 2026);
+      const currentYearNum = now.getFullYear();
+      const currentYear = YEARS.includes(currentYearNum as Year) ? currentYearNum : (YEARS[0] || 2026);
       const currentMonth = MONTHS.some(m => m.value === (now.getMonth() + 1)) ? (now.getMonth() + 1) : (MONTHS.find(m => m.value === 10)?.value || 10);
 
       const year = searchParams.get('year') || String(statement?.year || currentYear);

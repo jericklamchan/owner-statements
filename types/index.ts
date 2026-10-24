@@ -40,3 +40,8 @@ export interface PropertyRecord {
   commission?: number | null;
   policy?: PropertyPolicy; // <--- Add this
 }
+
+export interface AdditionalFee {
+  name: string;
+  amount: string;
+}

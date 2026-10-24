@@ -10,6 +10,7 @@ import { PolicyInputField } from '@/components/properties/PolicyInputField';
 import { PolicyListManager } from '@/components/properties/PolicyListManager';
 import { PolicyTextareaField } from '@/components/properties/PolicyTextareaField';
 import { PolicyFeeManager } from '@/components/properties/PolicyFeeManager';
+import { AdditionalFee } from '@/types';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -44,7 +45,7 @@ export default function PropertyPolicyPage({ params }: PageProps) {
 
   const [feeName, setFeeName] = useState('');
   const [feeAmount, setFeeAmount] = useState('');
-  const [additionalFees, setAdditionalFees] = useState<{ name: string; amount: string }[]>([]);
+  const [additionalFees, setAdditionalFees] = useState<AdditionalFee[]>([]);
 
   const [dateBasis, setDateBasis] = useState('checkin');
   const [includeOccupancy, setIncludeOccupancy] = useState(true);
@@ -73,8 +74,9 @@ export default function PropertyPolicyPage({ params }: PageProps) {
           if (p.includeOccupancy !== undefined) setIncludeOccupancy(p.includeOccupancy);
           if (p.statementNote) setStatementNote(p.statementNote);
         }
-      } catch (err: any) {
-        console.error('[Fetch Policy Error]:', err);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch policy';
+        console.error('[Fetch Policy Error]:', errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -133,9 +135,10 @@ export default function PropertyPolicyPage({ params }: PageProps) {
 
       router.push('/');
       router.refresh();
-    } catch (err: any) {
-      console.error('[Save Policy Error]:', err);
-      setError(err.message || 'An error occurred while saving.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred while saving.';
+      console.error('[Save Policy Error]:', errorMessage);
+      setError(errorMessage);
     } finally {
       setIsSaving(false);
     }

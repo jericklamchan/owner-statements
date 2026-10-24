@@ -14,7 +14,7 @@ import {
   StatementStatus
 } from '@/src/constants';
 import { normalizeStatementSnapshot } from './statementMapper';
-import { ReservationItem, ExpenseItem, PropertyStatement } from '@/types/statement';
+import { ReservationItem, ExpenseItem } from '@/types/statement';
 
 export interface StatementAdjustment {
   id: string;
@@ -66,7 +66,7 @@ export function getOrComputeStatement(options: StatementOptions) {
   const allStripeCharges = getStripeAdjustmentsByHostawayId(property.hostaway_id) as ExpenseItem[];
 
   // 2. Filter reservations strictly by date-range overlap for the target month/year
-  const reservations = allReservations.filter((r: any) => {
+  const reservations = allReservations.filter((r: ReservationItem & { checkIn?: string; arrivalDate?: string; date?: string; checkOut?: string; departureDate?: string }) => {
     // Target 'from' and 'to' (used by Hostaway mapper) with fallbacks for alternative naming
     const startStr = r.from || r.checkIn || r.arrivalDate || r.date;
     const endStr = r.to || r.checkOut || r.departureDate || startStr;
@@ -84,14 +84,14 @@ export function getOrComputeStatement(options: StatementOptions) {
   });
 
   // 3. Filter expenses strictly by target month/year
-  const qboExpenses = allQboExpenses.filter((e: any) => {
+  const qboExpenses = allQboExpenses.filter((e: ExpenseItem & { createdAt?: string }) => {
     const dateStr = e.date || e.createdAt;
     if (!dateStr) return false;
     const d = new Date(dateStr);
     return d.getFullYear() === targetYear && (d.getMonth() + 1) === targetMonth;
   });
 
-  const stripeCharges = allStripeCharges.filter((e: any) => {
+  const stripeCharges = allStripeCharges.filter((e: ExpenseItem & { createdAt?: string }) => {
     const dateStr = e.date || e.createdAt;
     if (!dateStr) return false;
     const d = new Date(dateStr);

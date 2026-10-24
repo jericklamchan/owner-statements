@@ -1,5 +1,5 @@
 import { PropertyStatement, ReservationItem, ExpenseItem, StatementAdjustment } from '@/types/statement';
-import { PropertyPolicy, PropertyRecord } from '@/types';
+import { PropertyPolicy } from '@/types';
 import { STATEMENT_STATUSES, SOURCE_TYPES, LINE_ITEM_TYPES } from '@/src/constants';
 import { getPropertyInitials } from '@/utils/formatters';
 import { getEffectivePolicy } from '@/utils/policyUtils';
@@ -60,12 +60,12 @@ export function normalizeStatementSnapshot(
     : Math.round(commissionBase * (policy.commissionRate / 100));
 
   // 4. Filter Expenses (Exclude QBO Categories & Bills if disabled)
-  const expenses = rawExpenses.filter((e: ExpenseItem) => {
+  const expenses = rawExpenses.filter((e: ExpenseItem & { type?: string }) => {
     const category = e.category || '';
     if (policy.excludedCategories.includes(category)) {
       return false;
     }
-    const isBill = e.id?.startsWith('BILL') || (e as any).type === 'Bill';
+    const isBill = e.id?.startsWith('BILL');
     if (!policy.includeBills && isBill) {
       return false;
     }
