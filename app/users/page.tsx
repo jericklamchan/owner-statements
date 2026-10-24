@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import ListPageLayout from '@/components/ui/ListPageLayout';
 import UserModal from '@/components/users/UserModal';
-import { UserRecord } from '@/types'; // Import shared type definition
+import { UserRecord } from '@/types';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<UserRecord[]>([]);

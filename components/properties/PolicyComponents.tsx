@@ -2,7 +2,6 @@
 
 import React from 'react';
 
-// Section Card Shell
 export function PolicySection({
   title,
   description,
@@ -74,7 +73,6 @@ export function PolicySelect({
   );
 }
 
-// Toggle / Checkbox Card
 export function PolicyCheckbox({
   label,
   description,

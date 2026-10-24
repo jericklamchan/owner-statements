@@ -1,4 +1,3 @@
-// app/api/properties/route.test.ts
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { GET, POST } from './route';
 import { NextRequest } from 'next/server';
