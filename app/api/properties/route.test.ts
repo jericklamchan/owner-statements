@@ -24,7 +24,7 @@ describe('API: /api/properties', () => {
 
   it('GET /api/properties should return success and properties list', async () => {
     const req = new NextRequest('http://localhost:3000/api/properties');
-    const res = await GET(req);
+    const res = (await GET(req)) as unknown as Response;
     const data = await res.json();
 
     expect(res.status).toBe(200);
@@ -46,10 +46,12 @@ describe('API: /api/properties', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const res = await POST(req);
-    const data = await res.json();
+    const res = (await POST(req)) as unknown as Response;
 
+    expect(res).toBeDefined();
     expect(res.status).toBe(201);
+
+    const data = await res.json();
     expect(data.success).toBe(true);
     expect(data.property.propertyName).toBe('Beachfront Villa');
     expect(data.property.status).toBe(STATEMENT_STATUSES.NOT_GENERATED);
