@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import BaseModal from '@/components/ui/BaseModal';
 import { UserRecord } from '@/types';
+import { USER_ROLES, UserRole } from '@/src/constants';
 
 interface UserModalProps {
   isOpen: boolean;
@@ -14,18 +15,18 @@ interface UserModalProps {
 export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: UserModalProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'Admin' | 'Property Manager' | 'Owner'>('Property Manager');
+  const [role, setRole] = useState<UserRole>(USER_ROLES.PROPERTY_MANAGER);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (userToEdit) {
       setName(userToEdit.name);
       setEmail(userToEdit.email);
-      setRole(userToEdit.role as any);
+      setRole(userToEdit.role as UserRole);
     } else {
       setName('');
       setEmail('');
-      setRole('Property Manager');
+      setRole(USER_ROLES.PROPERTY_MANAGER);
     }
   }, [userToEdit, isOpen]);
 
@@ -96,12 +97,12 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
           <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">Role</label>
           <select 
             value={role}
-            onChange={(e) => setRole(e.target.value as any)}
+            onChange={(e) => setRole(e.target.value as UserRole)}
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-900 bg-white focus:outline-none focus:border-blue-500"
           >
-            <option value="Admin">Admin</option>
-            <option value="Property Manager">Property Manager</option>
-            <option value="Owner">Owner</option>
+            <option value={USER_ROLES.ADMIN}>Admin</option>
+            <option value={USER_ROLES.PROPERTY_MANAGER}>Property Manager</option>
+            <option value={USER_ROLES.OWNER}>Owner</option>
           </select>
         </div>
 

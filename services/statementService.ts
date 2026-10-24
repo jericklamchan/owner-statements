@@ -7,6 +7,7 @@ import {
 } from '@/utils/mockService';
 import { 
   MONTHS, 
+  YEARS,
   Year, 
   MonthValue, 
   CHANNELS, 
@@ -40,7 +41,10 @@ export interface StatementPatchPayload {
  * Core domain service to generate or retrieve an aggregated statement snapshot.
  */
 export function getOrComputeStatement(options: StatementOptions) {
-  const { propertyId, year = '2026', month = '10' } = options;
+  const defaultYear = String(YEARS[0] || 2026);
+  const defaultMonth = String(MONTHS[0]?.value || 10);
+
+  const { propertyId, year = defaultYear, month = defaultMonth } = options;
   const snapshotKey = `${propertyId}_${year}_${month}`;
 
   const properties = getCollection('properties');
@@ -206,7 +210,10 @@ export function getOrComputeStatement(options: StatementOptions) {
  * Updates and persists a statement snapshot in the database.
  */
 export function updateAndSaveStatement(propertyId: string, payload: StatementPatchPayload) {
-  const { status, adjustments, year = '2026', month = '10' } = payload;
+  const defaultYear = String(YEARS[0] || 2026);
+  const defaultMonth = String(MONTHS[0]?.value || 10);
+
+  const { status, adjustments, year = defaultYear, month = defaultMonth } = payload;
   
   const result = getOrComputeStatement({ propertyId, year, month });
   if ('error' in result) {

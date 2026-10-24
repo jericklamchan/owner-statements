@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getOrComputeStatement, updateAndSaveStatement } from '@/services/statementService';
-import { STATEMENT_STATUSES } from '@/src/constants';
+import { STATEMENT_STATUSES, YEARS, MONTHS } from '@/src/constants';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -14,8 +14,11 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     const { searchParams } = new URL(request.url);
-    const year = searchParams.get('year') || '2026';
-    const month = searchParams.get('month') || '10';
+    const defaultYear = YEARS[0] || 2026;
+    const defaultMonth = MONTHS[0]?.value || 10;
+
+    const year = searchParams.get('year') || String(defaultYear);
+    const month = searchParams.get('month') || String(defaultMonth);
 
     const result = getOrComputeStatement({ propertyId, year, month });
 

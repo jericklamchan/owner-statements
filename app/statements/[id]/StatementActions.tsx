@@ -1,7 +1,9 @@
 'use client';
 
+import { STATEMENT_STATUSES, StatementStatus } from '@/src/constants';
+
 type StatementActionsProps = {
-  status: 'not_generated' | 'draft' | 'published';
+  status: StatementStatus;
   isUpdating: boolean;
   onRefresh: () => void;
   onGenerate: () => void;
@@ -17,9 +19,9 @@ export default function StatementActions({
   onPublish,
   onDownloadPdf,
 }: StatementActionsProps) {
-  const isNotGenerated = status === 'not_generated';
-  const isDraft = status === 'draft';
-  const isPublished = status === 'published';
+  const isNotGenerated = status === STATEMENT_STATUSES.NOT_GENERATED;
+  const isDraft = status === STATEMENT_STATUSES.DRAFT;
+  const isPublished = status === STATEMENT_STATUSES.PUBLISHED;
 
   return (
     <div className="flex items-center gap-2.5">

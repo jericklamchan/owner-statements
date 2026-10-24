@@ -7,6 +7,7 @@ import SummaryTab from '@/components/statements/SummaryTab';
 import LineItemsTab from '@/components/statements/LineItemsTab';
 import AuditTab from '@/components/statements/AuditTab';
 import { PropertyStatement, StatementAdjustment } from '@/types/statement';
+import { STATEMENT_STATUSES, YEARS, MONTHS } from '@/src/constants';
 import StatementHeader from './StatementHeader';
 import StatementActions from './StatementActions';
 import StatementMetrics from './StatementMetrics';
@@ -25,11 +26,14 @@ function StatementDetailContent({ params }: PageProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const defaultYear = YEARS[0] || 2026;
+  const defaultMonth = MONTHS[0]?.value || 10;
+
   const fetchStatement = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const res = await fetch(`/api/statements/${resolvedParams.id}?year=2026&month=10`);
+      const res = await fetch(`/api/statements/${resolvedParams.id}?year=${defaultYear}&month=${defaultMonth}`);
       const data = await res.json();
       
       if (data.success && data.statement) {
@@ -55,7 +59,11 @@ function StatementDetailContent({ params }: PageProps) {
       const res = await fetch(`/api/statements/${resolvedParams.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...payload, year: '2026', month: '10' }),
+        body: JSON.stringify({ 
+          ...payload, 
+          year: String(statement?.year || defaultYear), 
+          month: String(statement?.month || defaultMonth) 
+        }),
       });
       const data = await res.json();
 
@@ -106,8 +114,8 @@ function StatementDetailContent({ params }: PageProps) {
     );
   }
 
-  const isDraft = statement.status === 'draft';
-  const isPublished = statement.status === 'published';
+  const isDraft = statement.status === STATEMENT_STATUSES.DRAFT;
+  const isPublished = statement.status === STATEMENT_STATUSES.PUBLISHED;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] print:bg-white text-gray-900 pb-16 print:pb-0 print:p-0">
@@ -138,8 +146,8 @@ function StatementDetailContent({ params }: PageProps) {
               status={statement.status}
               isUpdating={isUpdating}
               onRefresh={fetchStatement}
-              onGenerate={() => patchStatement({ status: 'draft' })}
-              onPublish={() => patchStatement({ status: 'published' })}
+              onGenerate={() => patchStatement({ status: STATEMENT_STATUSES.DRAFT })}
+              onPublish={() => patchStatement({ status: STATEMENT_STATUSES.PUBLISHED })}
               onDownloadPdf={handleDownloadPdf}
             />
           </div>

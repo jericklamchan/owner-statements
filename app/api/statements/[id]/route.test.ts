@@ -3,12 +3,14 @@ import { GET, PATCH } from './route';
 import { NextRequest } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { STATEMENT_STATUSES } from '@/src/constants';
+import { STATEMENT_STATUSES, YEARS, MONTHS } from '@/src/constants';
 
 const testDbPath = path.join(process.cwd(), 'src/data/db.json');
 
 describe('API: /api/statements/[id]', () => {
   let backupContent: string | null = null;
+  const testYear = YEARS[0] || 2026;
+  const testMonth = MONTHS[0]?.value || 10;
 
   beforeEach(() => {
     if (fs.existsSync(testDbPath)) {
@@ -43,7 +45,7 @@ describe('API: /api/statements/[id]', () => {
   });
 
   it('GET should return 404 if property does not exist', async () => {
-    const req = new NextRequest('http://localhost:3000/api/statements/invalid-id?year=2026&month=10');
+    const req = new NextRequest(`http://localhost:3000/api/statements/invalid-id?year=${testYear}&month=${testMonth}`);
     const res = await GET(req, { params: Promise.resolve({ id: 'invalid-id' }) });
     const data = await res.json();
 
@@ -52,7 +54,7 @@ describe('API: /api/statements/[id]', () => {
   });
 
   it('GET should aggregate statement and calculate payouts correctly for valid property', async () => {
-    const req = new NextRequest('http://localhost:3000/api/statements/prop-test-1?year=2026&month=10');
+    const req = new NextRequest(`http://localhost:3000/api/statements/prop-test-1?year=${testYear}&month=${testMonth}`);
     const res = await GET(req, { params: Promise.resolve({ id: 'prop-test-1' }) });
     const data = await res.json();
 
@@ -69,10 +71,10 @@ describe('API: /api/statements/[id]', () => {
     const patchBody = {
       status: STATEMENT_STATUSES.PUBLISHED,
       adjustments: [
-        { id: 'ADJ-1', date: '2026-10-15', description: 'Late checkout fee', amount: 50 },
+        { id: 'ADJ-1', date: `${testYear}-10-15`, description: 'Late checkout fee', amount: 50 },
       ],
-      year: '2026',
-      month: '10',
+      year: String(testYear),
+      month: String(testMonth),
     };
 
     const req = new NextRequest('http://localhost:3000/api/statements/prop-test-1', {

@@ -30,9 +30,16 @@ export const LINE_ITEM_TYPES = {
   EXPENSE: 'expense',
 } as const;
 
+export const USER_ROLES = {
+  ADMIN: 'Admin',
+  PROPERTY_MANAGER: 'Property Manager',
+  OWNER: 'Owner',
+} as const;
+
 // Derived Union Types
 export type StatementStatus = typeof STATEMENT_STATUSES[keyof typeof STATEMENT_STATUSES];
 export type Channel = typeof CHANNELS[keyof typeof CHANNELS];
 export type ReservationStatus = typeof RESERVATION_STATUSES[keyof typeof RESERVATION_STATUSES];
 export type DataSource = typeof SOURCE_TYPES[keyof typeof SOURCE_TYPES];
 export type LineItemType = typeof LINE_ITEM_TYPES[keyof typeof LINE_ITEM_TYPES];
+export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];

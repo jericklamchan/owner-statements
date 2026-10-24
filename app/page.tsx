@@ -6,14 +6,15 @@ import PageHeader from '@/components/ui/PageHeader';
 import DashboardFilters from '@/components/DashboardFilters';
 import MetricsCards from '@/components/MetricsCards';
 import PropertyQueue from '@/components/PropertyQueue';
-import { STATEMENT_STATUSES, StatementStatus, Year, MonthValue } from '@/src/constants';
+import { STATEMENT_STATUSES, StatementStatus, Year, MonthValue, YEARS, MONTHS } from '@/src/constants';
 
 export default function DashboardPage() {
   const [properties, setProperties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const [selectedYear, setSelectedYear] = useState<Year>(2026);
-  const [selectedMonth, setSelectedMonth] = useState<MonthValue>(10);
+  // Default to the first available year and month from centralized date constants
+  const [selectedYear, setSelectedYear] = useState<Year>(YEARS[0] || 2026);
+  const [selectedMonth, setSelectedMonth] = useState<MonthValue>(MONTHS[0]?.value || 10);
   const [selectedStatus, setSelectedStatus] = useState<StatementStatus | 'All'>('All');
   const [searchTerm, setSearchTerm] = useState<string>('');
 

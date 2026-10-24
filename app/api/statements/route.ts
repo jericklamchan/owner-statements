@@ -5,13 +5,16 @@ import {
   getQuickBooksExpensesByClass, 
   getStripeAdjustmentsByHostawayId 
 } from '@/utils/mockService';
-import { STATEMENT_STATUSES, CHANNELS } from '@/src/constants';;
+import { STATEMENT_STATUSES, CHANNELS, YEARS, MONTHS } from '@/src/constants';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const year = searchParams.get('year') || '2026';
-    const month = searchParams.get('month') || '10';
+    const defaultYear = YEARS[0] || 2026;
+    const defaultMonth = MONTHS[0]?.value || 10;
+
+    const year = searchParams.get('year') || String(defaultYear);
+    const month = searchParams.get('month') || String(defaultMonth);
 
     const properties = getCollection('properties');
     const db = readDb();

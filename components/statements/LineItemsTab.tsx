@@ -2,6 +2,7 @@
 
 import { LineItem } from '@/types/statement';
 import StatementSection from '@/components/statements/StatementSection';
+import { LINE_ITEM_TYPES, SOURCE_TYPES } from '@/src/constants';
 
 type LineItemsTabProps = {
   lineItems?: LineItem[];
@@ -13,7 +14,7 @@ export default function LineItemsTab({ lineItems = [] }: LineItemsTabProps) {
     (item) =>
       item.category === 'Rental Income' ||
       item.category === 'Cleaning Fee' ||
-      (item.category === 'Manual Adjustment' && item.type === 'income')
+      (item.category === 'Manual Adjustment' && item.type === LINE_ITEM_TYPES.INCOME)
   );
 
   const feeItems = lineItems.filter(
@@ -21,7 +22,7 @@ export default function LineItemsTab({ lineItems = [] }: LineItemsTabProps) {
       (item.category !== 'Rental Income' &&
         item.category !== 'Cleaning Fee' &&
         item.category !== 'Manual Adjustment') ||
-      (item.category === 'Manual Adjustment' && item.type === 'expense')
+      (item.category === 'Manual Adjustment' && item.type === LINE_ITEM_TYPES.EXPENSE)
   );
 
   const rentalTotal = rentalItems.reduce((acc, item) => acc + item.amount, 0);
@@ -97,7 +98,7 @@ export default function LineItemsTab({ lineItems = [] }: LineItemsTabProps) {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {feeItems.map((item, index) => {
-              const isStripe = item.source === 'Stripe';
+              const isStripe = item.source === SOURCE_TYPES.STRIPE;
               const isMgmt = item.category === 'Management Fee';
               const isAdjustment = item.category === 'Manual Adjustment';
 

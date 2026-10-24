@@ -1,10 +1,12 @@
 'use client';
 
+import { STATEMENT_STATUSES, StatementStatus } from '@/src/constants';
+
 type StatementHeaderProps = {
   propertyName: string;
   ownerName: string;
   monthYear: string;
-  status: 'not_generated' | 'draft' | 'published';
+  status: StatementStatus;
 };
 
 export default function StatementHeader({
@@ -13,12 +15,11 @@ export default function StatementHeader({
   monthYear,
   status,
 }: StatementHeaderProps) {
-  const isDraft = status === 'draft';
-  const isPublished = status === 'published';
+  const isDraft = status === STATEMENT_STATUSES.DRAFT;
+  const isPublished = status === STATEMENT_STATUSES.PUBLISHED;
 
   return (
     <div>
-
       <div>
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold tracking-tight text-gray-900">{propertyName}</h1>
