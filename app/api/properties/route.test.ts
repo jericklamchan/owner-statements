@@ -4,6 +4,7 @@ import { GET, POST } from './route';
 import { NextRequest } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { STATEMENT_STATUSES } from '@/src/constants';
 
 const testDbPath = path.join(process.cwd(), 'src/data/db.json');
 
@@ -33,7 +34,12 @@ describe('API: /api/properties', () => {
   });
 
   it('POST /api/properties should add new property and return 201', async () => {
-    const newProperty = { propertyName: 'Beachfront Villa', ownerName: 'John Doe', hostaway_id: 'hw_999' };
+    const newProperty = { 
+      propertyName: 'Beachfront Villa', 
+      ownerName: 'John Doe', 
+      hostaway_id: 'hw_999',
+      qbo_class_name: 'SMC-BFV'
+    };
     
     const req = new NextRequest('http://localhost:3000/api/properties', {
       method: 'POST',
@@ -45,7 +51,8 @@ describe('API: /api/properties', () => {
     const data = await res.json();
 
     expect(res.status).toBe(201);
-    const savedName = data.propertyName || data.property?.propertyName;
-    expect(savedName).toBe('Beachfront Villa');
+    expect(data.success).toBe(true);
+    expect(data.property.propertyName).toBe('Beachfront Villa');
+    expect(data.property.status).toBe(STATEMENT_STATUSES.NOT_GENERATED);
   });
 });

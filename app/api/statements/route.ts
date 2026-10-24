@@ -5,6 +5,7 @@ import {
   getQuickBooksExpensesByClass, 
   getStripeAdjustmentsByHostawayId 
 } from '@/utils/mockService';
+import { STATEMENT_STATUSES, CHANNELS } from '@/src/constants';;
 
 export async function GET(request: Request) {
   try {
@@ -44,7 +45,7 @@ export async function GET(request: Request) {
       const grossRevenue = baseRentalIncome + cleaningFees;
       const mgmtFee = Math.round(baseRentalIncome * 0.18);
       
-      const hasVrboBooking = reservations.some((r: any) => r.channel && r.channel.toLowerCase() === 'vrbo');
+      const hasVrboBooking = reservations.some((r: any) => r.channel && r.channel.toLowerCase() === CHANNELS.VRBO.toLowerCase());
       const qboExpenses = getQuickBooksExpensesByClass(property.qbo_class_name);
       const stripeCharges = hasVrboBooking ? getStripeAdjustmentsByHostawayId(property.hostaway_id) : [];
       const totalExpenses = [...qboExpenses, ...stripeCharges].reduce((acc: number, e: any) => acc + (e.amount || 0), 0);
@@ -53,7 +54,7 @@ export async function GET(request: Request) {
 
       return {
         ...property,
-        status: 'not_generated',
+        status: STATEMENT_STATUSES.NOT_GENERATED,
         ownerPayout: totalPayout,
         commission: mgmtFee,
         year: parseInt(year, 10),

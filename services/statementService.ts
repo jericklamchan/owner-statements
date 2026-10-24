@@ -5,7 +5,16 @@ import {
   getQuickBooksExpensesByClass, 
   getStripeAdjustmentsByHostawayId 
 } from '@/utils/mockService';
-import { MONTHS, Year, MonthValue } from '@/src/constants/dates';
+import { 
+  MONTHS, 
+  Year, 
+  MonthValue, 
+  CHANNELS, 
+  STATEMENT_STATUSES, 
+  StatementStatus, 
+  SOURCE_TYPES, 
+  LINE_ITEM_TYPES 
+} from '@/src/constants';
 
 export interface StatementAdjustment {
   id: string;
@@ -21,14 +30,14 @@ export interface StatementOptions {
 }
 
 export interface StatementPatchPayload {
-  status?: string;
+  status?: StatementStatus | string;
   adjustments?: StatementAdjustment[];
   year?: Year | string;
   month?: MonthValue | string;
 }
 
 /**
-- Core domain service to generate or retrieve an aggregated statement snapshot.
+ * Core domain service to generate or retrieve an aggregated statement snapshot.
  */
 export function getOrComputeStatement(options: StatementOptions) {
   const { propertyId, year = '2026', month = '10' } = options;
@@ -53,12 +62,12 @@ export function getOrComputeStatement(options: StatementOptions) {
     reservations = savedSnapshot.reservations || [];
     expenses = savedSnapshot.expenses || [];
   } else {
-    status = 'not_generated';
+    status = STATEMENT_STATUSES.NOT_GENERATED;
     adjustments = [];
     reservations = getHostawayReservationsByHostawayId(property.hostaway_id);
     
     const hasVrboBooking = reservations.some(
-      (r: any) => r.channel && r.channel.toLowerCase() === 'vrbo'
+      (r: any) => r.channel && r.channel.toLowerCase() === CHANNELS.VRBO.toLowerCase()
     );
     const qboExpenses = getQuickBooksExpensesByClass(property.qbo_class_name);
     const stripeCharges = hasVrboBooking ? getStripeAdjustmentsByHostawayId(property.hostaway_id) : [];
@@ -102,8 +111,8 @@ export function getOrComputeStatement(options: StatementOptions) {
     description: `Reservation Payout (${r.channel}) - ${r.nights} nights`,
     category: 'Rental Income',
     amount: r.totalPrice - (r.cleaningFee || 0),
-    type: 'income',
-    source: 'Hostaway',
+    type: LINE_ITEM_TYPES.INCOME,
+    source: SOURCE_TYPES.HOSTAWAY,
   }));
 
   const cleaningLineItems = reservations.map((r: any) => ({
@@ -112,8 +121,8 @@ export function getOrComputeStatement(options: StatementOptions) {
     description: `Cleaning Fee Collected (${r.channel})`,
     category: 'Cleaning Fee',
     amount: r.cleaningFee || 0,
-    type: 'income',
-    source: 'Hostaway',
+    type: LINE_ITEM_TYPES.INCOME,
+    source: SOURCE_TYPES.HOSTAWAY,
   }));
 
   const mgmtFeeLineItem = mgmtFee > 0 ? [{
@@ -122,8 +131,8 @@ export function getOrComputeStatement(options: StatementOptions) {
     description: 'Management Fee (18% of Base Rental Income)',
     category: 'Management Fee',
     amount: mgmtFee,
-    type: 'expense',
-    source: 'Internal System',
+    type: LINE_ITEM_TYPES.EXPENSE,
+    source: SOURCE_TYPES.INTERNAL_SYSTEM,
   }] : [];
 
   const expenseLineItems = expenses.map((e: any) => ({
@@ -132,8 +141,8 @@ export function getOrComputeStatement(options: StatementOptions) {
     description: e.description,
     category: e.id && e.id.startsWith('ADJ') ? 'Stripe Fee' : (e.category || 'Maintenance'),
     amount: e.amount,
-    type: 'expense',
-    source: e.id && e.id.startsWith('ADJ') ? 'Stripe' : 'QuickBooks',
+    type: LINE_ITEM_TYPES.EXPENSE,
+    source: e.id && e.id.startsWith('ADJ') ? SOURCE_TYPES.STRIPE : SOURCE_TYPES.QUICKBOOKS,
   }));
 
   const adjustmentLineItems = adjustments.map((adj: any) => ({
@@ -142,8 +151,8 @@ export function getOrComputeStatement(options: StatementOptions) {
     description: adj.description,
     category: 'Manual Adjustment',
     amount: Math.abs(adj.amount),
-    type: adj.amount >= 0 ? 'income' : 'expense',
-    source: 'Manual Adjustment',
+    type: adj.amount >= 0 ? LINE_ITEM_TYPES.INCOME : LINE_ITEM_TYPES.EXPENSE,
+    source: SOURCE_TYPES.MANUAL_ADJUSTMENT,
   }));
 
   const lineItems = [
@@ -194,12 +203,11 @@ export function getOrComputeStatement(options: StatementOptions) {
 }
 
 /**
-- Updates and persists a statement snapshot in the database.
+ * Updates and persists a statement snapshot in the database.
  */
 export function updateAndSaveStatement(propertyId: string, payload: StatementPatchPayload) {
   const { status, adjustments, year = '2026', month = '10' } = payload;
   
-  // Re-run computation using the updated context
   const result = getOrComputeStatement({ propertyId, year, month });
   if ('error' in result) {
     return result;
@@ -210,13 +218,10 @@ export function updateAndSaveStatement(propertyId: string, payload: StatementPat
   const currentAdjustments = adjustments !== undefined ? adjustments : statement.adjustments;
   const newStatus = status !== undefined ? status : statement.status;
 
-  // If adjustments changed, recalculate totals with the new adjustments list
   if (adjustments !== undefined) {
-    // Re-run computation with updated adjustments explicitly passed or cached
     const db = readDb();
     if (!db.statements) db.statements = {};
 
-    // Update specific fields on the statement snapshot
     statement.status = newStatus;
     statement.adjustments = currentAdjustments;
     statement.totalAdjustments = currentAdjustments.reduce(
@@ -225,20 +230,18 @@ export function updateAndSaveStatement(propertyId: string, payload: StatementPat
     );
     statement.totalPayout = statement.grossRevenue - statement.mgmtFee - statement.totalExpenses + statement.totalAdjustments;
     
-    // Rebuild adjustment line items
     const adjustmentLineItems = currentAdjustments.map((adj: any) => ({
       id: adj.id,
       date: adj.date,
       description: adj.description,
       category: 'Manual Adjustment',
       amount: Math.abs(adj.amount),
-      type: adj.amount >= 0 ? 'income' : 'expense',
-      source: 'Manual Adjustment',
+      type: adj.amount >= 0 ? LINE_ITEM_TYPES.INCOME : LINE_ITEM_TYPES.EXPENSE,
+      source: SOURCE_TYPES.MANUAL_ADJUSTMENT,
     }));
 
-    // Filter out old adjustment line items and append new ones
     statement.lineItems = [
-      ...statement.lineItems.filter((li: any) => li.source !== 'Manual Adjustment'),
+      ...statement.lineItems.filter((li: any) => li.source !== SOURCE_TYPES.MANUAL_ADJUSTMENT),
       ...adjustmentLineItems,
     ];
 
@@ -250,7 +253,6 @@ export function updateAndSaveStatement(propertyId: string, payload: StatementPat
 
     return { statement };
   } else {
-    // Just update status if no adjustments changed
     const db = readDb();
     if (!db.statements) db.statements = {};
     statement.status = newStatus;

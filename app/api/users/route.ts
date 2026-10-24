@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       email: body.email || 'user@example.com',
       role: body.role || 'Property Manager',
       propertiesManaged: 0,
-      status: 'Active',
+      status: body.status || 'Active',
     };
 
     const savedItem = addToCollection('users', newUser);

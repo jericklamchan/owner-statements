@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCollection, addToCollection } from '@/utils/store';
 import { getPropertyInitials } from '@/utils/formatters';
+import { STATEMENT_STATUSES } from '@/src/constants';
 
 export async function GET(request: Request) {
   try {
@@ -8,17 +9,14 @@ export async function GET(request: Request) {
     const yearParam = searchParams.get('year');
     const monthParam = searchParams.get('month');
 
-    // Reserved for future date-filtered property metrics if needed
-    const year = yearParam ? parseInt(yearParam, 10) : 2026;
-    const month = monthParam ? parseInt(monthParam, 10) : 10;
-
     const rawProperties = getCollection('properties').filter((p: any) => p.status !== 'deleted');
 
     // Normalize properties with safe default financial fields to prevent UI crashes
     const properties = rawProperties.map((p: any) => ({
       ...p,
       avatarInitials: p.avatarInitials || getPropertyInitials(p.propertyName),
-      status: p.status || 'created',
+      // Map legacy 'created' or missing statuses to our centralized constant
+      status: p.status === 'created' ? STATEMENT_STATUSES.NOT_GENERATED : (p.status || STATEMENT_STATUSES.NOT_GENERATED),
       ownerPayout: p.ownerPayout ?? 0,
       commission: p.commission ?? 0,
       grossRevenue: p.grossRevenue ?? 0,
@@ -56,14 +54,16 @@ export async function POST(request: Request) {
     const propertyName = body.propertyName || 'New Property';
 
     const newProperty = {
-      id: body.id || Date.now().toString(), // Allows specifying '2' for Sunset Villa during demos
+      id: body.id || Date.now().toString(), // Allows specifying custom IDs during demos
       propertyName,
       ownerName: body.ownerName || 'Unknown Owner',
       address: body.address || '',
       city: body.city || '',
       country: body.country || '',
+      hostaway_id: body.hostaway_id || '',
+      qbo_class_name: body.qbo_class_name || '',
       avatarInitials: getPropertyInitials(propertyName),
-      status: 'created' as const,
+      status: STATEMENT_STATUSES.NOT_GENERATED,
       ownerPayout: 0,
       commission: 0,
       grossRevenue: 0,

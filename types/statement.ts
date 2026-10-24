@@ -1,10 +1,12 @@
+import { StatementStatus, Channel, ReservationStatus, DataSource, LineItemType } from '@/src/constants';
+
 export type ReservationItem = {
   id: string;
-  channel: 'Airbnb' | 'Vrbo' | 'VRBO' | 'Direct';
+  channel: Channel | 'VRBO';
   from: string;
   to: string;
   nights: number;
-  status: 'new' | 'modified' | 'cancelled' | 'Confirmed';
+  status: ReservationStatus;
   totalPrice: number;
   cleaningFee: number;
   channelFee?: number;
@@ -18,8 +20,8 @@ export type ExpenseItem = {
   vendor?: string;
   category: string;
   amount: number;
-  type?: 'expense';
-  source?: 'QuickBooks' | 'Stripe' | 'Internal System';
+  type?: LineItemType;
+  source?: DataSource;
 };
 
 export type StatementAdjustment = {
@@ -42,9 +44,9 @@ export type LineItem = {
   date: string;
   description: string;
   category: string;
-  source: 'Hostaway' | 'QuickBooks' | 'Stripe' | 'Internal System' | 'Manual Adjustment';
+  source: DataSource;
   amount: number;
-  type: 'income' | 'expense';
+  type: LineItemType;
 };
 
 export type QuickbooksSyncInfo = {
@@ -68,7 +70,7 @@ export type PropertyStatement = {
   monthYear: string;
   year: number;
   month: number;
-  status: 'not_generated' | 'draft' | 'published';
+  status: StatementStatus;
   totalPayout: number;
   grossRevenue: number;
   mgmtFee: number;

@@ -1,3 +1,5 @@
+import { StatementStatus } from '@/src/constants';
+
 export interface UserRecord {
   id: string;
   name: string;
@@ -18,11 +20,11 @@ export interface PropertyRecord {
   country?: string;
 
   // Integration Mappings
-  hostaway_id: string;      // e.g., "HW-10842"
-  qbo_class_name: string;   // e.g., "Property: Mountain Cabin"
+  hostaway_id: string;      
+  qbo_class_name: string;   
 
   // Statement status & financial indicators
-  status?: 'not_generated' | 'draft' | 'published';
+  status?: StatementStatus;
   date?: string | null;
   ownerPayout?: number | null;
   commission?: number | null;

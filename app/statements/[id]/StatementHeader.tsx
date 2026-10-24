@@ -1,7 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-
 type StatementHeaderProps = {
   propertyName: string;
   ownerName: string;

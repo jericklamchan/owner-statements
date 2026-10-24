@@ -3,6 +3,7 @@ import { GET, PATCH } from './route';
 import { NextRequest } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { STATEMENT_STATUSES } from '@/src/constants';
 
 const testDbPath = path.join(process.cwd(), 'src/data/db.json');
 
@@ -59,7 +60,6 @@ describe('API: /api/statements/[id]', () => {
     expect(data.success).toBe(true);
     expect(data.statement.propertyId).toBe('prop-test-1');
     expect(data.statement.propertyName).toBe('Alpine Loft');
-    // Verify that financial keys exist and are numbers
     expect(typeof data.statement.grossRevenue).toBe('number');
     expect(typeof data.statement.totalPayout).toBe('number');
     expect(typeof data.statement.mgmtFee).toBe('number');
@@ -67,7 +67,7 @@ describe('API: /api/statements/[id]', () => {
 
   it('PATCH should update statement snapshot status and save adjustments', async () => {
     const patchBody = {
-      status: 'published',
+      status: STATEMENT_STATUSES.PUBLISHED,
       adjustments: [
         { id: 'ADJ-1', date: '2026-10-15', description: 'Late checkout fee', amount: 50 },
       ],
@@ -86,7 +86,7 @@ describe('API: /api/statements/[id]', () => {
 
     expect(res.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(data.statement.status).toBe('published');
+    expect(data.statement.status).toBe(STATEMENT_STATUSES.PUBLISHED);
     expect(data.statement.adjustments).toHaveLength(1);
     expect(data.statement.adjustments[0].description).toBe('Late checkout fee');
   });

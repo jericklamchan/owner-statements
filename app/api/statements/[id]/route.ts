@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getOrComputeStatement, updateAndSaveStatement } from '@/services/statementService';
+import { STATEMENT_STATUSES } from '@/src/constants';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -47,6 +48,14 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     } catch {
       return NextResponse.json(
         { success: false, error: 'Invalid or missing JSON request body.' },
+        { status: 400 }
+      );
+    }
+
+    // Validate status if provided in payload against centralized constants
+    if (body.status && !Object.values(STATEMENT_STATUSES).includes(body.status)) {
+      return NextResponse.json(
+        { success: false, error: `Invalid status value. Must be one of: ${Object.values(STATEMENT_STATUSES).join(', ')}` },
         { status: 400 }
       );
     }

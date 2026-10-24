@@ -2,6 +2,7 @@
 
 import { PropertyStatement } from '@/types/statement';
 import StatementSection from '@/components/statements/StatementSection';
+import { CHANNELS } from '@/src/constants';
 
 type AuditTabProps = {
   statement?: PropertyStatement;
@@ -48,7 +49,7 @@ export default function AuditTab({ statement }: AuditTabProps) {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {reservations.map((res) => {
-              const isVrbo = res.channel.toLowerCase() === 'vrbo';
+              const isVrbo = res.channel.toLowerCase() === CHANNELS.VRBO.toLowerCase();;
               const baseRate = res.totalPrice - res.cleaningFee;
               const lodgingTax = 75.00;
               const stripeFeeRow = isVrbo ? 15.00 : 0;

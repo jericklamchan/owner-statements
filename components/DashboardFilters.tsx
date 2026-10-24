@@ -1,14 +1,14 @@
 'use client';
 
-import { YEARS, MONTHS, Year, MonthValue } from '@/src/constants/dates';
+import { YEARS, MONTHS, Year, MonthValue, STATEMENT_STATUSES, StatementStatus } from '@/src/constants';
 
 interface FilterProps {
   year: Year;
   setYear: (y: Year) => void;
   month: MonthValue;
   setMonth: (m: MonthValue) => void;
-  status: string;
-  setStatus: (s: string) => void;
+  status: StatementStatus | 'All';
+  setStatus: (s: StatementStatus | 'All') => void;
 }
 
 export default function DashboardFilters({
@@ -67,13 +67,13 @@ export default function DashboardFilters({
           <select
             aria-label="Filter by Status"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => setStatus(e.target.value as StatementStatus | 'All')}
             className="rounded-lg border border-gray-200 bg-gray-50/50 px-2.5 py-1 text-xs font-semibold text-gray-700 hover:border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none transition-all"
           >
             <option value="All">All Statuses</option>
-            <option value="not_generated">Not Generated</option>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
+            <option value={STATEMENT_STATUSES.NOT_GENERATED}>Not Generated</option>
+            <option value={STATEMENT_STATUSES.DRAFT}>Draft</option>
+            <option value={STATEMENT_STATUSES.PUBLISHED}>Published</option>
           </select>
         </div>
       </div>

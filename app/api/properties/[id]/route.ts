@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { updateInCollection, deleteFromCollection } from '@/utils/store';
+import { STATEMENT_STATUSES } from '@/src/constants';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -28,6 +29,14 @@ export async function PUT(request: Request, { params }: RouteParams) {
     if (!body || typeof body !== 'object') {
       return NextResponse.json(
         { success: false, error: 'Payload must be a valid object.' },
+        { status: 400 }
+      );
+    }
+
+    // Validate status if provided in payload
+    if (body.status && !Object.values(STATEMENT_STATUSES).includes(body.status)) {
+      return NextResponse.json(
+        { success: false, error: `Invalid status value. Must be one of: ${Object.values(STATEMENT_STATUSES).join(', ')}` },
         { status: 400 }
       );
     }

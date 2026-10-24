@@ -6,14 +6,15 @@ import PageHeader from '@/components/ui/PageHeader';
 import DashboardFilters from '@/components/DashboardFilters';
 import MetricsCards from '@/components/MetricsCards';
 import PropertyQueue from '@/components/PropertyQueue';
+import { STATEMENT_STATUSES, StatementStatus, Year, MonthValue } from '@/src/constants';
 
 export default function DashboardPage() {
   const [properties, setProperties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const [selectedYear, setSelectedYear] = useState<number>(2026);
-  const [selectedMonth, setSelectedMonth] = useState<number>(10);
-  const [selectedStatus, setSelectedStatus] = useState<string>('All');
+  const [selectedYear, setSelectedYear] = useState<Year>(2026);
+  const [selectedMonth, setSelectedMonth] = useState<MonthValue>(10);
+  const [selectedStatus, setSelectedStatus] = useState<StatementStatus | 'All'>('All');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   useEffect(() => {
@@ -51,9 +52,9 @@ export default function DashboardPage() {
     const list = properties;
 
     return {
-      notGenerated: list.filter((p) => p.status === 'not_generated' || !p.status).length,
-      draft: list.filter((p) => p.status === 'draft').length,
-      published: list.filter((p) => p.status === 'published').length,
+      notGenerated: list.filter((p) => p.status === STATEMENT_STATUSES.NOT_GENERATED || !p.status).length,
+      draft: list.filter((p) => p.status === STATEMENT_STATUSES.DRAFT).length,
+      published: list.filter((p) => p.status === STATEMENT_STATUSES.PUBLISHED).length,
       totalProperties: list.length,
       totalOwnerPayout: list.reduce((acc, curr) => acc + (curr.totalPayout || curr.ownerPayout || 0), 0),
       totalCommission: list.reduce((acc, curr) => acc + (curr.mgmtFee || curr.commission || 0), 0),

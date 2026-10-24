@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import BaseModal from '@/components/ui/BaseModal';
 import { PropertyRecord } from '@/types';
+import { STATEMENT_STATUSES } from '@/src/constants';
 
 interface PropertyModalProps {
   isOpen: boolean;
@@ -86,7 +87,7 @@ export default function PropertyModal({ isOpen, onClose, onSuccess, propertyToEd
           hostaway_id: hostawayId,
           qbo_class_name: qboClassName,
           avatarInitials: initials,
-          status: propertyToEdit?.status || 'not_generated',
+          status: propertyToEdit?.status || STATEMENT_STATUSES.NOT_GENERATED,
         };
 
         onSuccess(savedProperty);

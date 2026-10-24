@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { PropertyItem } from '@/types/dashboard';
+import { STATEMENT_STATUSES } from '@/src/constants';
 
 interface QueueProps {
   properties: PropertyItem[];
@@ -11,15 +12,15 @@ interface QueueProps {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string; border: string }> = {
-  not_generated: { label: 'Not Generated', bg: 'bg-amber-50/80', text: 'text-amber-700', dot: 'bg-amber-500', border: 'border-amber-200/60' },
-  created: { label: 'Not Generated', bg: 'bg-amber-50/80', text: 'text-amber-700', dot: 'bg-amber-500', border: 'border-amber-200/60' },
-  draft: { label: 'Draft', bg: 'bg-blue-50/80', text: 'text-blue-700', dot: 'bg-blue-500', border: 'border-blue-200/60' },
-  published: { label: 'Published', bg: 'bg-emerald-50/80', text: 'text-emerald-700', dot: 'bg-emerald-500', border: 'border-emerald-200/60' },
+  [STATEMENT_STATUSES.NOT_GENERATED]: { label: 'Not Generated', bg: 'bg-amber-50/80', text: 'text-amber-700', dot: 'bg-amber-500', border: 'border-amber-200/60' },
+  created: { label: 'Not Generated', bg: 'bg-amber-50/80', text: 'text-amber-700', dot: 'bg-amber-500', border: 'border-amber-200/60' }, // Legacy fallback
+  [STATEMENT_STATUSES.DRAFT]: { label: 'Draft', bg: 'bg-blue-50/80', text: 'text-blue-700', dot: 'bg-blue-500', border: 'border-blue-200/60' },
+  [STATEMENT_STATUSES.PUBLISHED]: { label: 'Published', bg: 'bg-emerald-50/80', text: 'text-emerald-700', dot: 'bg-emerald-500', border: 'border-emerald-200/60' },
 };
 
 export default function PropertyQueue({ properties, searchTerm, setSearchTerm }: QueueProps) {
-  const renderStatusBadge = (status: string = 'not_generated') => {
-    const config = STATUS_CONFIG[status] || STATUS_CONFIG.not_generated;
+  const renderStatusBadge = (status: string = STATEMENT_STATUSES.NOT_GENERATED) => {
+    const config = STATUS_CONFIG[status] || STATUS_CONFIG[STATEMENT_STATUSES.NOT_GENERATED];
     return (
       <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${config.bg} ${config.text} border ${config.border} shadow-2xs`}>
         <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`}></span>
@@ -29,7 +30,7 @@ export default function PropertyQueue({ properties, searchTerm, setSearchTerm }:
   };
 
   const getDisplayDate = (item: PropertyItem) => {
-    const isGenerated = item.status === 'draft' || item.status === 'published';
+    const isGenerated = item.status === STATEMENT_STATUSES.DRAFT || item.status === STATEMENT_STATUSES.PUBLISHED;
     
     if (!isGenerated) {
       return (
@@ -44,7 +45,7 @@ export default function PropertyQueue({ properties, searchTerm, setSearchTerm }:
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200/80 rounded-md px-2.5 py-1 shadow-2xs">
         <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
         <span>{dateStr}</span>
       </span>

@@ -2,6 +2,7 @@
 
 import { PropertyStatement } from '@/types/statement';
 import StatementSection from '@/components/statements/StatementSection';
+import { CHANNELS } from '@/src/constants';
 
 export default function ReservationsTable({ reservations }: { reservations: PropertyStatement['reservations'] }) {
   const hasReservations = reservations.length > 0;
@@ -29,8 +30,8 @@ export default function ReservationsTable({ reservations }: { reservations: Prop
         </thead>
         <tbody className="divide-y divide-gray-100">
           {reservations.map((res) => {
-            const isVrbo = res.channel.toLowerCase() === 'vrbo';
-            const isAirbnb = res.channel.toLowerCase() === 'airbnb';
+            const isVrbo = res.channel.toLowerCase() === CHANNELS.VRBO.toLowerCase();
+            const isAirbnb = res.channel.toLowerCase() === CHANNELS.AIRBNB.toLowerCase();
 
             return (
               <tr key={res.id} className="hover:bg-gray-50/80 transition-colors">
