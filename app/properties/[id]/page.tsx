@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, Suspense } from 'react';
+import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import NavBar from '@/components/NavBar';
 import PageHeader from '@/components/ui/PageHeader';
@@ -17,9 +17,13 @@ const ABSORPTION_OPTIONS = [
   { value: 'split', label: 'Split 50/50' },
 ];
 
-function PropertyPolicyContent({ params }: PageProps) {
+export default function PropertyPolicyPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const router = useRouter();
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [commissionRate, setCommissionRate] = useState('20');
   const [includeCleaningInCommission, setIncludeCleaningInCommission] = useState(false);
@@ -42,6 +46,40 @@ function PropertyPolicyContent({ params }: PageProps) {
   const [includeOccupancy, setIncludeOccupancy] = useState(true);
   const [statementNote, setStatementNote] = useState('');
 
+  // Pre-fill existing policy settings on mount
+  useEffect(() => {
+    async function loadPolicy() {
+      try {
+        const res = await fetch(`/api/properties/${resolvedParams.id}/policy`);
+        if (!res.ok) throw new Error('Failed to load property settings.');
+
+        const data = await res.json();
+        if (data.success && data.policy) {
+          const p = data.policy;
+          if (p.commissionRate !== undefined) setCommissionRate(String(p.commissionRate));
+          if (p.includeCleaningInCommission !== undefined) setIncludeCleaningInCommission(p.includeCleaningInCommission);
+          if (p.cleaningHandling) setCleaningHandling(p.cleaningHandling);
+          if (p.otaFees) setOtaFees(p.otaFees);
+          if (p.ccFees) setCcFees(p.ccFees);
+          if (p.taxes) setTaxes(p.taxes);
+          if (p.expenseReimbursement) setExpenseReimbursement(p.expenseReimbursement);
+          if (p.includeBills !== undefined) setIncludeBills(p.includeBills);
+          if (p.excludedCategories) setExcludedCategories(p.excludedCategories);
+          if (p.additionalFees) setAdditionalFees(p.additionalFees);
+          if (p.dateBasis) setDateBasis(p.dateBasis);
+          if (p.includeOccupancy !== undefined) setIncludeOccupancy(p.includeOccupancy);
+          if (p.statementNote) setStatementNote(p.statementNote);
+        }
+      } catch (err: any) {
+        console.error('[Fetch Policy Error]:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadPolicy();
+  }, [resolvedParams.id]);
+
   const handleAddCategory = () => {
     if (excludedCategory.trim()) {
       setExcludedCategories([...excludedCategories, excludedCategory.trim()]);
@@ -57,14 +95,57 @@ function PropertyPolicyContent({ params }: PageProps) {
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/');
+    setIsSaving(true);
+    setError(null);
+
+    const policyPayload = {
+      commissionRate: Number(commissionRate) || 0,
+      includeCleaningInCommission,
+      cleaningHandling,
+      otaFees,
+      ccFees,
+      taxes,
+      expenseReimbursement,
+      includeBills,
+      excludedCategories,
+      additionalFees,
+      dateBasis,
+      includeOccupancy,
+      statementNote,
+    };
+
+    try {
+      const res = await fetch(`/api/properties/${resolvedParams.id}/policy`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ policy: policyPayload }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to save property policy.');
+      }
+
+      router.push('/');
+      router.refresh();
+    } catch (err: any) {
+      console.error('[Save Policy Error]:', err);
+      setError(err.message || 'An error occurred while saving changes.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const formActions = [
     { label: 'Cancel', href: '/' },
-    { label: 'Save changes', type: 'submit' as const, variant: 'primary' as const },
+    { 
+      label: isSaving ? 'Saving...' : 'Save changes', 
+      type: 'submit' as const, 
+      variant: 'primary' as const,
+      disabled: isSaving || isLoading,
+    },
   ];
 
   return (
@@ -73,6 +154,12 @@ function PropertyPolicyContent({ params }: PageProps) {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <form onSubmit={handleSave} className="space-y-6">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600 font-medium">
+              {error}
+            </div>
+          )}
+
           {/* Shared Unified Page Header */}
           <PageHeader
             title="Property Policy & Calculations"
@@ -311,19 +398,5 @@ function PropertyPolicyContent({ params }: PageProps) {
         </form>
       </main>
     </div>
-  );
-}
-
-export default function EditPropertyPolicyPage({ params }: PageProps) {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-[#f8fafc] text-gray-900 pb-16 flex items-center justify-center">
-          <p className="text-xs text-gray-500 animate-pulse">Loading property policy...</p>
-        </div>
-      }
-    >
-      <PropertyPolicyContent params={params} />
-    </Suspense>
   );
 }

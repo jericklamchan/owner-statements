@@ -8,6 +8,22 @@ export interface UserRecord {
   status: string;
 }
 
+export type PropertyPolicy = {
+  commissionRate?: number;
+  includeCleaningInCommission?: boolean;
+  cleaningHandling?: string;
+  otaFees?: string;
+  ccFees?: string;
+  taxes?: string;
+  expenseReimbursement?: string;
+  includeBills?: boolean;
+  excludedCategories?: string[];
+  additionalFees?: Array<{ name: string; amount: string }>;
+  dateBasis?: string;
+  includeOccupancy?: boolean;
+  statementNote?: string;
+};
+
 export interface PropertyRecord {
   id: string;
   propertyName: string;
@@ -22,4 +38,5 @@ export interface PropertyRecord {
   date?: string | null;
   ownerPayout?: number | null;
   commission?: number | null;
+  policy?: PropertyPolicy; // <--- Add this
 }
