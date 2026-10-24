@@ -78,7 +78,10 @@ export type PropertyStatement = {
   expenses: ExpenseItem[];
   adjustments: StatementAdjustment[];
   lineItems: LineItem[];
+  statementNote?: string;
   quickbooksSync: QuickbooksSyncInfo;
   stripePayout: StripePayoutInfo;
   apiError?: string;
+  commissionRate?: number;
+  includeCleaningInCommission?: boolean;
 };

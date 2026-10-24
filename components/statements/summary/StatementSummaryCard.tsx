@@ -24,7 +24,9 @@ export default function StatementSummaryCard({ statement }: { statement: Propert
           </div>
 
           <div className="flex justify-between">
-            <dt className="text-gray-500">Total Commission (18% excl. cleaning)</dt>
+            <dt className="text-gray-500">
+              Total Commission ({statement.commissionRate ?? 20}% {statement.includeCleaningInCommission ? 'incl. cleaning' : 'excl. cleaning'})
+            </dt>
             <dd className="font-medium text-red-600">-${statement.mgmtFee.toFixed(2)}</dd>
           </div>
 
