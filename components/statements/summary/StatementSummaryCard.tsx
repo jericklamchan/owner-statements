@@ -4,7 +4,11 @@ import { PropertyStatement } from '@/types/statement';
 import StatementSection from '@/components/statements/StatementSection';
 
 export default function StatementSummaryCard({ statement }: { statement: PropertyStatement }) {
-  const stripeFeesTotal = statement.stripeCharges?.reduce((acc, charge) => acc + charge.amount, 0) || 0;
+  const expenses = statement?.expenses ?? [];
+  const stripeFeesTotal = expenses
+    .filter((e: any) => e.source === 'Stripe' || (e.id && e.id.startsWith('ADJ')))
+    .reduce((acc: number, charge: any) => acc + Number(charge.amount || 0), 0);
+    
   const hasStripeFees = stripeFeesTotal > 0;
   const regularExpenses = statement.totalExpenses - stripeFeesTotal;
   const totalAdjustments = statement.totalAdjustments || 0;

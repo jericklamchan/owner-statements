@@ -31,14 +31,6 @@ export type StatementAdjustment = {
   amount: number;
 };
 
-export type StatementExpense = {
-  id?: string;
-  date?: string;
-  category?: string;
-  description?: string;
-  amount: number;
-};
-
 export type LineItem = {
   id: string;
   date: string;
@@ -75,7 +67,7 @@ export type PropertyStatement = {
   grossRevenue: number;
   mgmtFee: number;
   totalExpenses: number;
-  totalAdjustments?: number;
+  totalAdjustments: number;
   baseRentalIncome: number;
   cleaningFees: number;
   occupancyRate: number;
@@ -84,11 +76,9 @@ export type PropertyStatement = {
   avgDailyRate: number;
   reservations: ReservationItem[];
   expenses: ExpenseItem[];
-  adjustments?: StatementAdjustment[];
-  qboExpenses?: ExpenseItem[];
-  stripeCharges?: ExpenseItem[];
-  lineItems?: LineItem[];
-  quickbooksSync?: QuickbooksSyncInfo;
-  stripePayout?: StripePayoutInfo;
+  adjustments: StatementAdjustment[];
+  lineItems: LineItem[];
+  quickbooksSync: QuickbooksSyncInfo;
+  stripePayout: StripePayoutInfo;
   apiError?: string;
 };

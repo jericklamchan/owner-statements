@@ -13,17 +13,11 @@ export interface PropertyRecord {
   propertyName: string;
   ownerName: string;
   avatarInitials?: string;
-
-  // Location fields
   address?: string;
   city?: string;
   country?: string;
-
-  // Integration Mappings
   hostaway_id: string;      
   qbo_class_name: string;   
-
-  // Statement status & financial indicators
   status?: StatementStatus;
   date?: string | null;
   ownerPayout?: number | null;

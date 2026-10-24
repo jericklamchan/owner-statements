@@ -10,20 +10,23 @@ type AuditTabProps = {
 
 export default function AuditTab({ statement }: AuditTabProps) {
   const reservations = statement?.reservations ?? [];
-  const stripeCharges = statement?.stripeCharges ?? [];
-  const qboExpenses = statement?.qboExpenses ?? [];
+  const allExpenses = statement?.expenses ?? [];
+  
+  // Filter unified expenses into Stripe and QBO categories
+  const stripeCharges = allExpenses.filter((e: any) => e.source === 'Stripe' || (e.id && e.id.startsWith('ADJ')));
+  const qboExpenses = allExpenses.filter((e: any) => e.source === 'QuickBooks' || (!e.id?.startsWith('ADJ') && e.source !== 'Stripe'));
 
   const hasReservations = reservations.length > 0;
   const hasStripeCharges = stripeCharges.length > 0;
   const hasQboExpenses = qboExpenses.length > 0;
 
-  // Calculate totals safely
-  const totalBaseRate = reservations.reduce((sum, res) => sum + (res.totalPrice - res.cleaningFee), 0);
-  const totalCleaningFee = reservations.reduce((sum, res) => sum + res.cleaningFee, 0);
+  // Calculate totals safely with explicit types
+  const totalBaseRate = reservations.reduce((sum: number, res: any) => sum + (res.totalPrice - res.cleaningFee), 0);
+  const totalCleaningFee = reservations.reduce((sum: number, res: any) => sum + res.cleaningFee, 0);
   const totalLodgingTax = reservations.length * 75.00;
-  const totalStripeFees = stripeCharges.reduce((sum, charge) => sum + charge.amount, 0);
-  const totalPaid = (reservations.reduce((sum, res) => sum + res.totalPrice, 0)) + totalLodgingTax;
-  const totalActualIncome = (reservations.reduce((sum, res) => sum + res.totalPrice, 0)) - totalStripeFees;
+  const totalStripeFees = stripeCharges.reduce((sum: number, charge: any) => sum + Number(charge.amount || 0), 0);
+  const totalPaid = (reservations.reduce((sum: number, res: any) => sum + res.totalPrice, 0)) + totalLodgingTax;
+  const totalActualIncome = (reservations.reduce((sum: number, res: any) => sum + res.totalPrice, 0)) - totalStripeFees;
 
   return (
     <div className="space-y-6">
@@ -48,8 +51,8 @@ export default function AuditTab({ statement }: AuditTabProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {reservations.map((res) => {
-              const isVrbo = res.channel.toLowerCase() === CHANNELS.VRBO.toLowerCase();;
+            {reservations.map((res: any) => {
+              const isVrbo = res.channel.toLowerCase() === CHANNELS.VRBO.toLowerCase();
               const baseRate = res.totalPrice - res.cleaningFee;
               const lodgingTax = 75.00;
               const stripeFeeRow = isVrbo ? 15.00 : 0;
@@ -105,12 +108,12 @@ export default function AuditTab({ statement }: AuditTabProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {stripeCharges.map((charge) => (
+            {stripeCharges.map((charge: any) => (
               <tr key={charge.id} className="hover:bg-gray-50/80 transition-colors">
                 <td className="px-5 py-3 font-mono text-gray-500">{charge.id}</td>
-                <td className="px-5 py-3 text-gray-700 uppercase font-medium">{charge.type}</td>
+                <td className="px-5 py-3 text-gray-700 uppercase font-medium">{charge.type || 'Charge'}</td>
                 <td className="px-5 py-3 text-gray-600">{charge.description}</td>
-                <td className="px-5 py-3 text-right font-medium text-gray-900">${charge.amount.toFixed(2)}</td>
+                <td className="px-5 py-3 text-right font-medium text-gray-900">${Number(charge.amount || 0).toFixed(2)}</td>
                 <td className="px-5 py-3 text-gray-600">{charge.date}</td>
               </tr>
             ))}
@@ -134,12 +137,12 @@ export default function AuditTab({ statement }: AuditTabProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {qboExpenses.map((expense) => (
+            {qboExpenses.map((expense: any) => (
               <tr key={expense.id} className="hover:bg-gray-50/80 transition-colors">
                 <td className="px-5 py-3 text-gray-600">{expense.date}</td>
                 <td className="px-5 py-3 text-gray-700 font-medium">{expense.category}</td>
                 <td className="px-5 py-3 text-gray-600">{expense.description || expense.vendor}</td>
-                <td className="px-5 py-3 text-right font-medium text-gray-900">${expense.amount.toFixed(2)}</td>
+                <td className="px-5 py-3 text-right font-medium text-gray-900">${Number(expense.amount || 0).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
