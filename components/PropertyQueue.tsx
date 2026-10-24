@@ -2,13 +2,15 @@
 
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
-import { PropertyItem } from '@/types/dashboard';
+import { PropertyStatement } from '@/types/statement';
 import { STATEMENT_STATUSES } from '@/src/constants';
 
 interface QueueProps {
-  properties: PropertyItem[];
+  properties: PropertyStatement[];
   searchTerm: string;
   setSearchTerm: (term: string) => void;
+  year: number | string;
+  month: number | string;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string; border: string }> = {
@@ -18,7 +20,7 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; d
   [STATEMENT_STATUSES.PUBLISHED]: { label: 'Published', bg: 'bg-emerald-50/80', text: 'text-emerald-700', dot: 'bg-emerald-500', border: 'border-emerald-200/60' },
 };
 
-export default function PropertyQueue({ properties, searchTerm, setSearchTerm }: QueueProps) {
+export default function PropertyQueue({ properties, searchTerm, setSearchTerm, year, month }: QueueProps) {
   const renderStatusBadge = (status: string = STATEMENT_STATUSES.NOT_GENERATED) => {
     const config = STATUS_CONFIG[status] || STATUS_CONFIG[STATEMENT_STATUSES.NOT_GENERATED];
     return (
@@ -29,7 +31,7 @@ export default function PropertyQueue({ properties, searchTerm, setSearchTerm }:
     );
   };
 
-  const getDisplayDate = (item: PropertyItem) => {
+  const getDisplayDate = (item: PropertyStatement) => {
     const isGenerated = item.status === STATEMENT_STATUSES.DRAFT || item.status === STATEMENT_STATUSES.PUBLISHED;
     
     if (!isGenerated) {
@@ -40,7 +42,7 @@ export default function PropertyQueue({ properties, searchTerm, setSearchTerm }:
       );
     }
 
-    const dateStr = item.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const dateStr = item.monthYear || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200/80 rounded-md px-2.5 py-1 shadow-2xs">
@@ -51,6 +53,11 @@ export default function PropertyQueue({ properties, searchTerm, setSearchTerm }:
       </span>
     );
   };
+
+  // Inside PropertyQueue component:
+  properties.forEach(item => {
+    console.log(`[PropertyQueue Debug] Property: ${item.propertyName}, totalPayout:`, item.totalPayout);
+  });
 
   return (
     <div className="space-y-3 pt-2">
@@ -108,7 +115,7 @@ export default function PropertyQueue({ properties, searchTerm, setSearchTerm }:
                     <td className="px-5 py-4 align-middle">
                       <div className="flex items-center space-x-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50/80 border border-teal-200/60 text-xs font-bold text-teal-700 shadow-2xs group-hover:scale-105 transition-transform shrink-0">
-                          {item.avatarInitials}
+                          {item.avatarInitials || item.propertyName?.substring(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold text-gray-900 text-xs truncate">{item.propertyName}</p>
@@ -129,27 +136,27 @@ export default function PropertyQueue({ properties, searchTerm, setSearchTerm }:
 
                     {/* Owner Payout */}
                     <td className="px-5 py-4 align-middle text-right font-bold text-gray-900 tabular-nums">
-                      {item.ownerPayout !== null ? `$${item.ownerPayout.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : <span className="text-gray-300 font-mono">—</span>}
+                      {item.totalPayout !== null && item.totalPayout !== undefined ? `$${item.totalPayout.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : <span className="text-gray-300 font-mono">—</span>}
                     </td>
 
                     {/* Action Buttons */}
                     <td className="px-5 py-4 align-middle text-right">
                       <div className="inline-flex items-center gap-1.5 justify-end">
                         {/* View Button */}
-                        <Link
-                          href={`/statements/${item.id}`}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-900 hover:text-white hover:border-gray-900 transition-all shadow-2xs cursor-pointer group/btn"
-                        >
-                          <svg className="w-3.5 h-3.5 text-gray-400 group-hover/btn:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          <span>View</span>
-                        </Link>
+                      <Link
+                        href={`/statements/${item.propertyId || item.id}?year=${year}&month=${month}`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-900 hover:text-white hover:border-gray-900 transition-all shadow-2xs cursor-pointer group/btn"
+                      >
+                        <svg className="w-3.5 h-3.5 text-gray-400 group-hover/btn:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <span>View</span>
+                      </Link>
 
                         {/* Edit Button */}
                         <Link
-                          href={`/properties/${item.id}`}
+                          href={`/properties/${item.propertyId || item.id}`}
                           title="Edit Property Policy"
                           className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-blue-600 hover:border-gray-300 transition-all shadow-2xs cursor-pointer group/edit"
                         >

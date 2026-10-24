@@ -14,6 +14,7 @@ import {
   StatementStatus
 } from '@/src/constants';
 import { normalizeStatementSnapshot } from './statementMapper';
+import { ReservationItem, ExpenseItem, PropertyStatement } from '@/types/statement';
 
 export interface StatementAdjustment {
   id: string;
@@ -40,13 +41,13 @@ export interface StatementPatchPayload {
  */
 export function getOrComputeStatement(options: StatementOptions) {
   const defaultYear = String(YEARS[0] || 2026);
-  const defaultMonth = String(MONTHS[0]?.value || 10);
+  const defaultMonth = String(MONTHS.find((m) => m.value === 10)?.value || 10);
 
   const { propertyId, year = defaultYear, month = defaultMonth } = options;
   const snapshotKey = `${propertyId}_${year}_${month}`;
 
   const properties = getCollection('properties');
-  const property = properties.find((p: any) => p.id === propertyId);
+  const property = properties.find((p) => p.id === propertyId);
 
   if (!property) {
     return { error: 'Property not found', status: 404 };
@@ -56,26 +57,62 @@ export function getOrComputeStatement(options: StatementOptions) {
   const statementsCache = db.statements || {};
   const savedSnapshot = statementsCache[snapshotKey];
 
-  let rawData = savedSnapshot;
+  const targetYear = parseInt(String(year), 10);
+  const targetMonth = parseInt(String(month), 10);
 
-  if (!rawData) {
-    const reservations = getHostawayReservationsByHostawayId(property.hostaway_id);
-    const hasVrboBooking = reservations.some(
-      (r: any) => r.channel && r.channel.toLowerCase() === CHANNELS.VRBO.toLowerCase()
-    );
-    const qboExpenses = getQuickBooksExpensesByClass(property.qbo_class_name);
-    const stripeCharges = hasVrboBooking ? getStripeAdjustmentsByHostawayId(property.hostaway_id) : [];
+  // 1. Always fetch all raw source items from mock storage
+  const allReservations = getHostawayReservationsByHostawayId(property.hostaway_id) as ReservationItem[];
+  const allQboExpenses = getQuickBooksExpensesByClass(property.qbo_class_name) as ExpenseItem[];
+  const allStripeCharges = getStripeAdjustmentsByHostawayId(property.hostaway_id) as ExpenseItem[];
 
-    rawData = {
-      id: snapshotKey,
-      status: STATEMENT_STATUSES.NOT_GENERATED,
-      reservations,
-      expenses: [...qboExpenses, ...stripeCharges],
-      adjustments: [],
-    };
-  }
+  // 2. Filter reservations strictly by date-range overlap for the target month/year
+  const reservations = allReservations.filter((r: any) => {
+    // Target 'from' and 'to' (used by Hostaway mapper) with fallbacks for alternative naming
+    const startStr = r.from || r.checkIn || r.arrivalDate || r.date;
+    const endStr = r.to || r.checkOut || r.departureDate || startStr;
 
-  const monthObj = MONTHS.find((m) => m.value === parseInt(String(month), 10));
+    // Strict check: reject items without date fields rather than letting them pass
+    if (!startStr) return false;
+
+    const startDate = new Date(startStr);
+    const endDate = endStr ? new Date(endStr) : startDate;
+
+    const monthStart = new Date(targetYear, targetMonth - 1, 1);
+    const monthEnd = new Date(targetYear, targetMonth, 0, 23, 59, 59);
+
+    return startDate <= monthEnd && endDate >= monthStart;
+  });
+
+  // 3. Filter expenses strictly by target month/year
+  const qboExpenses = allQboExpenses.filter((e: any) => {
+    const dateStr = e.date || e.createdAt;
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    return d.getFullYear() === targetYear && (d.getMonth() + 1) === targetMonth;
+  });
+
+  const stripeCharges = allStripeCharges.filter((e: any) => {
+    const dateStr = e.date || e.createdAt;
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    return d.getFullYear() === targetYear && (d.getMonth() + 1) === targetMonth;
+  });
+
+  const hasVrboBooking = reservations.some(
+    (r: ReservationItem) => r.channel && r.channel.toLowerCase() === CHANNELS.VRBO.toLowerCase()
+  );
+  const activeStripeCharges = hasVrboBooking ? stripeCharges : [];
+
+  // 4. Construct rawData preserving user status & manual adjustments if previously saved
+  const rawData = {
+    id: snapshotKey,
+    status: savedSnapshot?.status || STATEMENT_STATUSES.NOT_GENERATED,
+    reservations,
+    expenses: [...qboExpenses, ...activeStripeCharges],
+    adjustments: savedSnapshot?.adjustments || [],
+  };
+
+  const monthObj = MONTHS.find((m) => m.value === targetMonth);
   const monthName = monthObj ? monthObj.label : 'October';
   const monthYear = `${monthName} ${year}`;
 
@@ -89,7 +126,7 @@ export function getOrComputeStatement(options: StatementOptions) {
  */
 export function updateAndSaveStatement(propertyId: string, payload: StatementPatchPayload) {
   const defaultYear = String(YEARS[0] || 2026);
-  const defaultMonth = String(MONTHS[0]?.value || 10);
+  const defaultMonth = String(MONTHS.find((m) => m.value === 10)?.value || 10);
 
   const { status, adjustments, year = defaultYear, month = defaultMonth } = payload;
   
@@ -106,7 +143,13 @@ export function updateAndSaveStatement(propertyId: string, payload: StatementPat
   const db = readDb();
   if (!db.statements) db.statements = {};
 
-  // Build updated raw structure and re-normalize through mapper
+  const properties = getCollection('properties');
+  const property = properties.find((p) => p.id === propertyId);
+
+  if (!property) {
+    return { error: 'Property not found', status: 404 };
+  }
+
   const updatedRaw = {
     ...statement,
     status: newStatus,
@@ -115,7 +158,7 @@ export function updateAndSaveStatement(propertyId: string, payload: StatementPat
 
   const recomputedStatement = normalizeStatementSnapshot(
     updatedRaw, 
-    { id: statement.propertyId, propertyName: statement.propertyName, ownerName: statement.ownerName },
+    property,
     statement.year,
     statement.month,
     statement.monthYear

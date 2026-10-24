@@ -1,6 +1,6 @@
 'use client';
 
-import { PropertyStatement } from '@/types/statement';
+import { PropertyStatement, ReservationItem, ExpenseItem } from '@/types/statement';
 import StatementSection from '@/components/statements/StatementSection';
 import { CHANNELS } from '@/src/constants';
 
@@ -9,24 +9,24 @@ type AuditTabProps = {
 };
 
 export default function AuditTab({ statement }: AuditTabProps) {
-  const reservations = statement?.reservations ?? [];
-  const allExpenses = statement?.expenses ?? [];
+  const reservations: ReservationItem[] = statement?.reservations ?? [];
+  const allExpenses: ExpenseItem[] = statement?.expenses ?? [];
   
   // Filter unified expenses into Stripe and QBO categories
-  const stripeCharges = allExpenses.filter((e: any) => e.source === 'Stripe' || (e.id && e.id.startsWith('ADJ')));
-  const qboExpenses = allExpenses.filter((e: any) => e.source === 'QuickBooks' || (!e.id?.startsWith('ADJ') && e.source !== 'Stripe'));
+  const stripeCharges = allExpenses.filter((e: ExpenseItem) => e.source === 'Stripe' || (e.id && e.id.startsWith('ADJ')));
+  const qboExpenses = allExpenses.filter((e: ExpenseItem) => e.source === 'QuickBooks' || (!e.id?.startsWith('ADJ') && e.source !== 'Stripe'));
 
   const hasReservations = reservations.length > 0;
   const hasStripeCharges = stripeCharges.length > 0;
   const hasQboExpenses = qboExpenses.length > 0;
 
   // Calculate totals safely with explicit types
-  const totalBaseRate = reservations.reduce((sum: number, res: any) => sum + (res.totalPrice - res.cleaningFee), 0);
-  const totalCleaningFee = reservations.reduce((sum: number, res: any) => sum + res.cleaningFee, 0);
+  const totalBaseRate = reservations.reduce((sum: number, res: ReservationItem) => sum + (res.totalPrice - res.cleaningFee), 0);
+  const totalCleaningFee = reservations.reduce((sum: number, res: ReservationItem) => sum + res.cleaningFee, 0);
   const totalLodgingTax = reservations.length * 75.00;
-  const totalStripeFees = stripeCharges.reduce((sum: number, charge: any) => sum + Number(charge.amount || 0), 0);
-  const totalPaid = (reservations.reduce((sum: number, res: any) => sum + res.totalPrice, 0)) + totalLodgingTax;
-  const totalActualIncome = (reservations.reduce((sum: number, res: any) => sum + res.totalPrice, 0)) - totalStripeFees;
+  const totalStripeFees = stripeCharges.reduce((sum: number, charge: ExpenseItem) => sum + Number(charge.amount || 0), 0);
+  const totalPaid = (reservations.reduce((sum: number, res: ReservationItem) => sum + res.totalPrice, 0)) + totalLodgingTax;
+  const totalActualIncome = (reservations.reduce((sum: number, res: ReservationItem) => sum + res.totalPrice, 0)) - totalStripeFees;
 
   return (
     <div className="space-y-6">
@@ -51,7 +51,7 @@ export default function AuditTab({ statement }: AuditTabProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {reservations.map((res: any) => {
+            {reservations.map((res: ReservationItem) => {
               const isVrbo = res.channel.toLowerCase() === CHANNELS.VRBO.toLowerCase();
               const baseRate = res.totalPrice - res.cleaningFee;
               const lodgingTax = 75.00;
@@ -108,7 +108,7 @@ export default function AuditTab({ statement }: AuditTabProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {stripeCharges.map((charge: any) => (
+            {stripeCharges.map((charge: ExpenseItem) => (
               <tr key={charge.id} className="hover:bg-gray-50/80 transition-colors">
                 <td className="px-5 py-3 font-mono text-gray-500">{charge.id}</td>
                 <td className="px-5 py-3 text-gray-700 uppercase font-medium">{charge.type || 'Charge'}</td>
@@ -137,7 +137,7 @@ export default function AuditTab({ statement }: AuditTabProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {qboExpenses.map((expense: any) => (
+            {qboExpenses.map((expense: ExpenseItem) => (
               <tr key={expense.id} className="hover:bg-gray-50/80 transition-colors">
                 <td className="px-5 py-3 text-gray-600">{expense.date}</td>
                 <td className="px-5 py-3 text-gray-700 font-medium">{expense.category}</td>

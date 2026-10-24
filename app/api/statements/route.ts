@@ -6,6 +6,8 @@ import {
   getStripeAdjustmentsByHostawayId 
 } from '@/utils/mockService';
 import { STATEMENT_STATUSES, CHANNELS, YEARS, MONTHS } from '@/src/constants';
+import { ReservationItem, ExpenseItem, PropertyStatement } from '@/types/statement';
+import { PropertyRecord } from '@/types';
 
 export async function GET(request: Request) {
   try {
@@ -16,11 +18,11 @@ export async function GET(request: Request) {
     const year = searchParams.get('year') || String(defaultYear);
     const month = searchParams.get('month') || String(defaultMonth);
 
-    const properties = getCollection('properties');
-    const db = readDb();
+    const properties = getCollection('properties') as PropertyRecord[];
+    const db = readDb() as { statements?: Record<string, PropertyStatement> };
     const statementsCache = db.statements || {};
 
-    const statementsWithStatus = properties.map((property: any) => {
+    const statementsWithStatus = properties.map((property: PropertyRecord) => {
       const snapshotKey = `${property.id}_${year}_${month}`;
       const savedSnapshot = statementsCache[snapshotKey];
 
@@ -36,22 +38,22 @@ export async function GET(request: Request) {
       }
 
       // Fallback live calculation for properties without a saved snapshot yet
-      const reservations = getHostawayReservationsByHostawayId(property.hostaway_id);
+      const reservations = getHostawayReservationsByHostawayId(property.hostaway_id) as ReservationItem[];
       const baseRentalIncome = reservations.reduce(
-        (acc: number, r: any) => acc + (r.totalPrice - (r.cleaningFee || 0)),
+        (acc: number, r: ReservationItem) => acc + (r.totalPrice - (r.cleaningFee || 0)),
         0
       );
       const cleaningFees = reservations.reduce(
-        (acc: number, r: any) => acc + (r.cleaningFee || 0),
+        (acc: number, r: ReservationItem) => acc + (r.cleaningFee || 0),
         0
       );
       const grossRevenue = baseRentalIncome + cleaningFees;
       const mgmtFee = Math.round(baseRentalIncome * 0.18);
       
-      const hasVrboBooking = reservations.some((r: any) => r.channel && r.channel.toLowerCase() === CHANNELS.VRBO.toLowerCase());
-      const qboExpenses = getQuickBooksExpensesByClass(property.qbo_class_name);
-      const stripeCharges = hasVrboBooking ? getStripeAdjustmentsByHostawayId(property.hostaway_id) : [];
-      const totalExpenses = [...qboExpenses, ...stripeCharges].reduce((acc: number, e: any) => acc + (e.amount || 0), 0);
+      const hasVrboBooking = reservations.some((r: ReservationItem) => r.channel && r.channel.toLowerCase() === CHANNELS.VRBO.toLowerCase());
+      const qboExpenses = getQuickBooksExpensesByClass(property.qbo_class_name) as ExpenseItem[];
+      const stripeCharges = hasVrboBooking ? (getStripeAdjustmentsByHostawayId(property.hostaway_id) as ExpenseItem[]) : [];
+      const totalExpenses = [...qboExpenses, ...stripeCharges].reduce((acc: number, e: ExpenseItem) => acc + (Number(e.amount) || 0), 0);
 
       const totalPayout = grossRevenue - mgmtFee - totalExpenses;
 

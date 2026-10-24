@@ -39,7 +39,13 @@ describe('Database Store Utility', () => {
 
   it('should successfully write and read back collection data', () => {
     const testData = {
-      properties: [{ id: 'prop-1', name: 'Sunset Villa' }],
+      properties: [{ 
+        id: 'prop-1', 
+        propertyName: 'Sunset Villa', 
+        ownerName: 'Alice', 
+        hostaway_id: 'H1', 
+        qbo_class_name: 'Q1' 
+      }],
       users: [],
       statements: {},
     };
@@ -48,17 +54,29 @@ describe('Database Store Utility', () => {
     expect(written).toBe(true);
 
     const properties = getCollection('properties');
-    expect(properties).toEqual([{ id: 'prop-1', name: 'Sunset Villa' }]);
+    expect(properties).toEqual([{ 
+      id: 'prop-1', 
+      propertyName: 'Sunset Villa', 
+      ownerName: 'Alice', 
+      hostaway_id: 'H1', 
+      qbo_class_name: 'Q1' 
+    }]);
   });
 
   it('should add items to a collection correctly', () => {
     writeDb({ properties: [], users: [], statements: {} });
 
-    const newItem = { id: 'prop-2', name: 'Ocean View' };
+    const newItem = { 
+      id: 'prop-2', 
+      propertyName: 'Ocean View', 
+      ownerName: 'Bob', 
+      hostaway_id: 'H2', 
+      qbo_class_name: 'Q2' 
+    };
     const added = addToCollection('properties', newItem);
 
     expect(added).toEqual(newItem);
     expect(getCollection('properties')).toHaveLength(1);
-    expect(getCollection('properties')[0].name).toBe('Ocean View');
+    expect(getCollection('properties')[0].propertyName).toBe('Ocean View');
   });
 });

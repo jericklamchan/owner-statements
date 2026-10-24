@@ -14,11 +14,14 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     const { searchParams } = new URL(request.url);
-    const defaultYear = YEARS[0] || 2026;
-    const defaultMonth = MONTHS[0]?.value || 10;
+    
+    // Use actual current system date as robust fallbacks (October 2026)
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // 10 for October
 
-    const year = searchParams.get('year') || String(defaultYear);
-    const month = searchParams.get('month') || String(defaultMonth);
+    const year = searchParams.get('year') || String(currentYear);
+    const month = searchParams.get('month') || String(currentMonth);
 
     const result = getOrComputeStatement({ propertyId, year, month });
 

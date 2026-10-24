@@ -1,18 +1,18 @@
 'use client';
 
-import { PropertyStatement } from '@/types/statement';
+import { PropertyStatement, ExpenseItem } from '@/types/statement';
 import StatementSection from '@/components/statements/StatementSection';
 
 export default function StatementSummaryCard({ statement }: { statement: PropertyStatement }) {
-  const expenses = statement?.expenses ?? [];
+  const expenses: ExpenseItem[] = statement?.expenses ?? [];
   const stripeFeesTotal = expenses
-    .filter((e: any) => e.source === 'Stripe' || (e.id && e.id.startsWith('ADJ')))
-    .reduce((acc: number, charge: any) => acc + Number(charge.amount || 0), 0);
+    .filter((e: ExpenseItem) => e.source === 'Stripe' || (e.id && e.id.startsWith('ADJ')))
+    .reduce((acc: number, charge: ExpenseItem) => acc + Number(charge.amount || 0), 0);
     
   const hasStripeFees = stripeFeesTotal > 0;
   const regularExpenses = statement.totalExpenses - stripeFeesTotal;
   const totalAdjustments = statement.totalAdjustments || 0;
-  const hasAdjustments = statement.adjustments && statement.adjustments.length > 0;
+  const hasAdjustments = Boolean(statement.adjustments && statement.adjustments.length > 0);
 
   return (
     <StatementSection title="Statement Summary">

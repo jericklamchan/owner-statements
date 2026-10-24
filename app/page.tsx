@@ -7,22 +7,30 @@ import DashboardFilters from '@/components/DashboardFilters';
 import MetricsCards from '@/components/MetricsCards';
 import PropertyQueue from '@/components/PropertyQueue';
 import { STATEMENT_STATUSES, StatementStatus, Year, MonthValue, YEARS, MONTHS } from '@/src/constants';
+import { PropertyStatement } from '@/types/statement';
 
 export default function DashboardPage() {
-  const [properties, setProperties] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // Initialize with current real-world date (e.g., October 2026), falling back safely to constants
+  const now = new Date();
+  const currentYear = now.getFullYear() as Year;
+  const currentMonth = (now.getMonth() + 1) as MonthValue;
 
-  // Default to the first available year and month from centralized date constants
-  const [selectedYear, setSelectedYear] = useState<Year>(YEARS[0] || 2026);
-  const [selectedMonth, setSelectedMonth] = useState<MonthValue>(MONTHS[0]?.value || 10);
+  const [selectedYear, setSelectedYear] = useState<Year>(
+    YEARS.includes(currentYear) ? currentYear : (YEARS[0] || 2026)
+  );
+  const [selectedMonth, setSelectedMonth] = useState<MonthValue>(
+    MONTHS.some((m) => m.value === currentMonth) ? currentMonth : (MONTHS[0]?.value || 10)
+  );
+
   const [selectedStatus, setSelectedStatus] = useState<StatementStatus | 'All'>('All');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [properties, setProperties] = useState<PropertyStatement[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function fetchDashboardStatements() {
       try {
         setIsLoading(true);
-        // Fetch properties combined with their statement snapshot status for the selected year/month
         const res = await fetch(`/api/statements?year=${selectedYear}&month=${selectedMonth}`);
         const data = await res.json();
         if (data.success) {
@@ -39,7 +47,7 @@ export default function DashboardPage() {
   }, [selectedYear, selectedMonth]);
 
   const filteredProperties = useMemo(() => {
-    return properties.filter((item) => {
+    return properties.filter((item: PropertyStatement) => {
       const matchStatus = selectedStatus === 'All' || item.status === selectedStatus;
       const matchSearch =
         item.propertyName.toLowerCase().includes(searchTerm.toLowerCase().trim()) ||
@@ -53,12 +61,12 @@ export default function DashboardPage() {
     const list = properties;
 
     return {
-      notGenerated: list.filter((p) => p.status === STATEMENT_STATUSES.NOT_GENERATED || !p.status).length,
-      draft: list.filter((p) => p.status === STATEMENT_STATUSES.DRAFT).length,
-      published: list.filter((p) => p.status === STATEMENT_STATUSES.PUBLISHED).length,
+      notGenerated: list.filter((p: PropertyStatement) => p.status === STATEMENT_STATUSES.NOT_GENERATED || !p.status).length,
+      draft: list.filter((p: PropertyStatement) => p.status === STATEMENT_STATUSES.DRAFT).length,
+      published: list.filter((p: PropertyStatement) => p.status === STATEMENT_STATUSES.PUBLISHED).length,
       totalProperties: list.length,
-      totalOwnerPayout: list.reduce((acc, curr) => acc + (curr.totalPayout || curr.ownerPayout || 0), 0),
-      totalCommission: list.reduce((acc, curr) => acc + (curr.mgmtFee || curr.commission || 0), 0),
+      totalOwnerPayout: list.reduce((acc: number, curr: PropertyStatement) => acc + Number(curr.totalPayout || 0), 0),
+      totalCommission: list.reduce((acc: number, curr: PropertyStatement) => acc + Number(curr.mgmtFee || 0), 0),
     };
   }, [properties]);
 
@@ -78,7 +86,6 @@ export default function DashboardPage() {
       <NavBar />
 
       <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-6 space-y-5">
-        {/* Unified Page Header Integration */}
         <PageHeader
           backHref="" 
           backLabel=""
@@ -108,6 +115,8 @@ export default function DashboardPage() {
           properties={filteredProperties}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
+          year={selectedYear}   // <-- Pass selectedYear
+          month={selectedMonth} // <-- Pass selectedMonth
         />
       </main>
     </div>

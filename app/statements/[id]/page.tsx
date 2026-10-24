@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import SummaryTab from '@/components/statements/SummaryTab';
@@ -17,8 +17,9 @@ type PageProps = {
   params: Promise<{ id: string }>;
 };
 
-function StatementDetailContent({ params }: PageProps) {
-  const resolvedParams = use(params);
+export default function StatementDetailPage({ params }: PageProps) {
+  // Use React state for resolved ID to prevent any unmemoized async rendering during SSR/hydration
+  const [propertyId, setPropertyId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'summary' | 'line-items' | 'audit'>('summary');
   
   const [statement, setStatement] = useState<PropertyStatement | null>(null);
@@ -26,14 +27,28 @@ function StatementDetailContent({ params }: PageProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const defaultYear = YEARS[0] || 2026;
-  const defaultMonth = MONTHS[0]?.value || 10;
+  // Safely resolve the Next.js async params promise on mount
+  useEffect(() => {
+    params.then((resolved) => {
+      setPropertyId(resolved.id);
+    });
+  }, [params]);
 
-  const fetchStatement = async () => {
+  const fetchStatement = async (id: string) => {
     try {
       setIsLoading(true);
       setError(null);
-      const res = await fetch(`/api/statements/${resolvedParams.id}?year=${defaultYear}&month=${defaultMonth}`);
+
+      const searchParams = new URLSearchParams(window.location.search);
+      const now = new Date();
+      
+      const currentYear = YEARS.includes(now.getFullYear() as any) ? now.getFullYear() : (YEARS[0] || 2026);
+      const currentMonth = MONTHS.some(m => m.value === (now.getMonth() + 1)) ? (now.getMonth() + 1) : (MONTHS.find(m => m.value === 10)?.value || 10);
+
+      const year = searchParams.get('year') || String(currentYear);
+      const month = searchParams.get('month') || String(currentMonth);
+
+      const res = await fetch(`/api/statements/${id}?year=${year}&month=${month}`);
       const data = await res.json();
       
       if (data.success && data.statement) {
@@ -50,25 +65,36 @@ function StatementDetailContent({ params }: PageProps) {
   };
 
   useEffect(() => {
-    fetchStatement();
-  }, [resolvedParams.id]);
+    if (propertyId) {
+      fetchStatement(propertyId);
+    }
+  }, [propertyId]);
 
   const patchStatement = async (payload: { status?: string; adjustments?: StatementAdjustment[] }) => {
+    if (!propertyId) return;
     try {
       setIsUpdating(true);
-      const res = await fetch(`/api/statements/${resolvedParams.id}`, {
+      const searchParams = new URLSearchParams(window.location.search);
+      const now = new Date();
+      const currentYear = YEARS.includes(now.getFullYear() as any) ? now.getFullYear() : (YEARS[0] || 2026);
+      const currentMonth = MONTHS.some(m => m.value === (now.getMonth() + 1)) ? (now.getMonth() + 1) : (MONTHS.find(m => m.value === 10)?.value || 10);
+
+      const year = searchParams.get('year') || String(statement?.year || currentYear);
+      const month = searchParams.get('month') || String(statement?.month || currentMonth);
+
+      const res = await fetch(`/api/statements/${propertyId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           ...payload, 
-          year: String(statement?.year || defaultYear), 
-          month: String(statement?.month || defaultMonth) 
+          year, 
+          month 
         }),
       });
       const data = await res.json();
 
       if (data.success) {
-        await fetchStatement();
+        await fetchStatement(propertyId);
       } else {
         alert(data.error || 'Failed to update statement');
       }
@@ -84,13 +110,13 @@ function StatementDetailContent({ params }: PageProps) {
     window.print();
   };
 
-  if (isLoading) {
+  if (isLoading || !propertyId) {
     return (
       <div className="min-h-screen bg-[#f8fafc] text-gray-900 pb-16">
         <NavBar />
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <p className="text-xs text-gray-500 animate-pulse">
-            Loading live statement data from Hostaway, QuickBooks, & Stripe...
+            Loading statement view...
           </p>
         </main>
       </div>
@@ -119,13 +145,11 @@ function StatementDetailContent({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] print:bg-white text-gray-900 pb-16 print:pb-0 print:p-0">
-      {/* Hide navigation bar on print */}
       <div className="print:hidden">
         <NavBar />
       </div>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 print:p-0 print:max-w-full print:w-full">
-        {/* Hide top action bar on print */}
        <div className="print:hidden mb-6 pb-6 border-b border-gray-200/80">
           <Link
             href="/"
@@ -145,7 +169,7 @@ function StatementDetailContent({ params }: PageProps) {
             <StatementActions
               status={statement.status}
               isUpdating={isUpdating}
-              onRefresh={fetchStatement}
+              onRefresh={() => fetchStatement(propertyId)}
               onGenerate={() => patchStatement({ status: STATEMENT_STATUSES.DRAFT })}
               onPublish={() => patchStatement({ status: STATEMENT_STATUSES.PUBLISHED })}
               onDownloadPdf={handleDownloadPdf}
@@ -153,7 +177,6 @@ function StatementDetailContent({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Invoice Header */}
         {isPublished && (
           <StatementInvoiceHeader
             statementId={statement.id}
@@ -161,12 +184,10 @@ function StatementDetailContent({ params }: PageProps) {
           />
         )}
 
-        {/* Standard Statement Metrics Row */}
         <div className="mb-6 print:mb-4">
           <StatementMetrics statement={statement} />
         </div>
 
-        {/* Hide tab navigation on print */}
         <div className="print:hidden border-b border-gray-200 mb-6">
           <nav className="flex space-x-6">
             <button
@@ -202,7 +223,6 @@ function StatementDetailContent({ params }: PageProps) {
           </nav>
         </div>
 
-        {/* Print wrapper to scale or constrain page break behavior */}
         <div className="print:space-y-4">
           {activeTab === 'summary' && (
             <SummaryTab 
@@ -216,19 +236,5 @@ function StatementDetailContent({ params }: PageProps) {
         </div>
       </main>
     </div>
-  );
-}
-
-export default function StatementDetailPage({ params }: PageProps) {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-[#f8fafc] text-gray-900 pb-16 flex items-center justify-center">
-          <p className="text-xs text-gray-500 animate-pulse">Loading statement view...</p>
-        </div>
-      }
-    >
-      <StatementDetailContent params={params} />
-    </Suspense>
   );
 }
