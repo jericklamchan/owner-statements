@@ -6,6 +6,17 @@ Built to eliminate manual spreadsheet error in property management by synthesizi
 
 ---
 
+## 📸 App Walkthrough
+
+| Policy Configuration | Summary & Metrics |
+| :---: | :---: |
+| ![Policy Page](./docs/policy-page.png) | ![Statement Summary](./docs/statement-summary.png) |
+
+| Line Items Breakdown | Audit & Sync Logs |
+| :---: | :---: |
+| ![Line Items](./docs/line-items.png) | ![Audit Tab](./docs/audit-tab.png) |
+
+
 ## 🏗️ System Architecture & Design Principles
 
 The application is structured around a strict **separation of concerns**, separating HTTP protocol routing from core domain business logic.
